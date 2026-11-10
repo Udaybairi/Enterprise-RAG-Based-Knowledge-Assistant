@@ -12,7 +12,7 @@ os.environ.update({
     "ENVIRONMENT": "test",
     "LLM_PROVIDER": "fake",
     "DATA_DIR": str(_TMP / "data"),
-    "DATABASE_URL": f"sqlite:///{_TMP / 'test.db'}",
+    "DATABASE_URL": os.environ.get("TEST_DATABASE_URL", f"sqlite:///{_TMP / 'test.db'}"),
     "INGESTION_SYNC": "true",
     "RATE_LIMIT_ENABLED": "false",
     "SIMILARITY_THRESHOLD": "0.1",

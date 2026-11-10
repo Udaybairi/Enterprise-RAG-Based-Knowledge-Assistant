@@ -100,3 +100,38 @@ def test_gemini_embeddings_task_type_fallback():
     g = _gemini(reject=True)
     out = g.embed_array(["a", "b"])
     assert out.shape == (2, 8) and g._supports_task_type is False
+
+
+class _FakeGenModels:
+    def __init__(self):
+        self.calls = []
+
+    def generate_content(self, model, contents, config):
+        self.calls.append(("generate", model, config))
+        return SimpleNamespace(text='{"standalone_question": "q"}')
+
+    def generate_content_stream(self, model, contents, config):
+        self.calls.append(("stream", model, config))
+        return iter([SimpleNamespace(text="Hello "), SimpleNamespace(text=None), SimpleNamespace(text="world [1].")])
+
+
+def test_gemini_llm_generate_stream_and_models():
+    from app.llm.gemini_llm import GeminiLLM
+
+    s = Settings(google_api_key="test-key", gemini_chat_model="chat-m", gemini_utility_model="util-m")
+    llm = GeminiLLM(s)
+    llm.client = SimpleNamespace(models=_FakeGenModels())
+    assert llm.generate_json("<task>rewrite</task>") == {"standalone_question": "q"}
+    kind, model, cfg = llm.client.models.calls[-1]
+    assert model == "util-m" and cfg.response_mime_type == "application/json" and cfg.temperature == 0.0
+    assert "".join(llm.stream("prompt", system="sys")) == "Hello world [1]."
+    kind, model, cfg = llm.client.models.calls[-1]
+    assert kind == "stream" and model == "chat-m" and cfg.system_instruction == "sys"
+
+
+def test_gemini_requires_key():
+    from app.core.exceptions import ProviderError
+    from app.llm.gemini_llm import GeminiLLM
+
+    with pytest.raises(ProviderError):
+        GeminiLLM(Settings(google_api_key=None))

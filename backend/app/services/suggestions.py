@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import random
+import re
 import time
 
 from sqlalchemy import select
@@ -31,7 +32,10 @@ def suggest_questions(db: Session, collection_ids: list[str], n: int = 4) -> lis
     ).all()
     if not rows:
         return []
-    sections = list(dict.fromkeys(r[0].split(" > ")[-1] for r in rows if r[0]))
+    sections = list(dict.fromkeys(
+        re.sub(r"^((\d+\.)+\d*|\d+\)|[IVX]+\.)\s*", "", r[0].split(" > ")[-1]).strip()
+        for r in rows if r[0]))
+    sections = [s for s in sections if len(s) > 2 and not s.lower().startswith(("rows ", "sheet:"))]
     out: list[str] = []
     llm = get_llm()
     if llm.provider != "fake":

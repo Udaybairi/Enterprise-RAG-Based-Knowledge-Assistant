@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+}
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+}
+
+@utility card {
+  @apply rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+}
+@utility btn-secondary {
+  @apply btn border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+}
+@utility btn-ghost {
+  @apply btn text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800;
+}
+@utility btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-700;
+}
+@utility input {
+  @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
+}
+@utility label {
+  @apply mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400;
+}
+
+.prose-chat {
+  @apply text-[0.925rem] leading-relaxed;
+}
+.prose-chat p { @apply my-2; }
+.prose-chat ul { @apply my-2 list-disc pl-5; }
+.prose-chat ol { @apply my-2 list-decimal pl-5; }
+.prose-chat li { @apply my-0.5; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { @apply mt-3 mb-1.5 font-semibold; }
+.prose-chat code { @apply rounded bg-slate-100 px-1 py-0.5 text-[0.85em] dark:bg-slate-800; }
+.prose-chat pre { @apply my-2 overflow-x-auto rounded-lg bg-slate-900 p-3 text-slate-100; }
+.prose-chat table { @apply my-2 w-full border-collapse text-sm; }
+.prose-chat th, .prose-chat td { @apply border border-slate-200 px-2 py-1 text-left dark:border-slate-700; }
+.prose-chat th { @apply bg-slate-50 dark:bg-slate-800; }
+.prose-chat blockquote { @apply my-2 border-l-4 border-amber-400 bg-amber-50 px-3 py-1.5 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200; }
+.prose-chat a { @apply text-brand-600 underline dark:text-brand-400; }
+
+mark.hl { @apply rounded bg-yellow-200 px-0.5 text-slate-900 dark:bg-yellow-500/40 dark:text-yellow-50; }
