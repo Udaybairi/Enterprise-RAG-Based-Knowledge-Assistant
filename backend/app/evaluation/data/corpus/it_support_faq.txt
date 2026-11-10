@@ -1,0 +1,17 @@
+IT SUPPORT FREQUENTLY ASKED QUESTIONS
+
+How do I contact the IT service desk?
+The IT service desk is available 24/7 through the ServiceNow portal, by chat in Teams, or by phone at extension 4357.
+Priority 1 tickets receive a response within 15 minutes; standard tickets are answered within one business day.
+
+How often are laptops replaced?
+Standard laptops are refreshed every three years. Engineering workstations are refreshed every two years.
+Damaged devices are replaced immediately after the service desk has assessed the damage.
+
+How do I connect to the VPN?
+Install the GlobalProtect client from the Software Center and sign in with your corporate account and MFA.
+The VPN gateway address is vpn.northwind.example.
+
+Which collaboration tools are approved?
+Microsoft Teams is the approved tool for chat and video meetings. Confluence is used for documentation and Jira for project tracking.
+Using personal file-sharing services such as private Dropbox accounts for company data is not allowed.
