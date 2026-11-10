@@ -37,7 +37,7 @@ def _build_engine(url: str) -> Engine:
 def get_engine() -> Engine:
     global _engine, _SessionLocal
     if _engine is None:
-        _engine = _build_engine(get_settings().database_url)
+        _engine = _build_engine(get_settings().effective_database_url)
         _SessionLocal = sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False)
     return _engine
 

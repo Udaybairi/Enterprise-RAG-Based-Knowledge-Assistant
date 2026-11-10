@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,7 +29,8 @@ class Settings(BaseSettings):
     environment: Literal["development", "test", "production"] = "development"
     log_level: str = "INFO"
     log_json: bool = False
-    cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    # NoDecode: accept plain comma-separated values (as documented) as well as JSON lists.
+    cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:3000"])
 
     # ---- security ----------------------------------------------------------
     # No usable default in production: startup refuses to run with the dev key.
@@ -52,10 +53,11 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: int = 60
 
     # ---- storage -----------------------------------------------------------
-    database_url: str = f"sqlite:///{BACKEND_DIR / 'data' / 'app.db'}"
+    # When unset, a SQLite file inside DATA_DIR is used (fine for development / single node).
+    database_url: str | None = None
     data_dir: Path = BACKEND_DIR / "data"
     max_upload_size_mb: int = 50
-    allowed_extensions: list[str] = Field(
+    allowed_extensions: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [".pdf", ".docx", ".txt", ".csv", ".xlsx", ".pptx", ".md", ".markdown"]
     )
 
@@ -103,9 +105,17 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", "allowed_extensions", mode="before")
     @classmethod
     def _split_csv(cls, v):  # allow comma separated env values
-        if isinstance(v, str) and not v.strip().startswith("["):
+        if isinstance(v, str):
+            if v.strip().startswith("["):
+                import json
+
+                return json.loads(v)
             return [s.strip() for s in v.split(",") if s.strip()]
         return v
+
+    @property
+    def effective_database_url(self) -> str:
+        return self.database_url or f"sqlite:///{self.data_dir / 'app.db'}"
 
     @property
     def uploads_dir(self) -> Path:

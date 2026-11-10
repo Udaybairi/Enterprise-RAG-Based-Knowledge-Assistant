@@ -236,7 +236,7 @@ cd backend && TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/te
 cd frontend && npm run lint && npm run build
 ```
 
-The 73 backend tests run offline with the deterministic provider. They cover:
+The 75 backend tests run offline with the deterministic provider. They cover:
 
 - loaders for every format, preprocessing, and all four chunkers
 - both vector stores, MMR/RRF and the rerankers
