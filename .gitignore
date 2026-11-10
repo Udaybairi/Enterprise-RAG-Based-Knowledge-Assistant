@@ -27,3 +27,4 @@ frontend/next-env.d.ts
 .DS_Store
 .idea/
 .vscode/
+.vercel

@@ -68,7 +68,9 @@ The Gemini model variables (`GEMINI_CHAT_MODEL`, …) are optional; see `backend
 ### 3. Create the frontend project
 
 1. **Add New… → Project**, then import the **same** repository again.
-2. **Root Directory:** `frontend`. Next.js is detected automatically.
+2. **Root Directory:** `frontend`. Next.js is detected automatically; `frontend/vercel.json` also pins
+   `"framework": "nextjs"`, because a project created without a framework preset (e.g. with
+   `vercel project add`) builds fine but serves 404 for every page.
 3. Environment variable: `NEXT_PUBLIC_API_URL` = `https://<backend>.vercel.app` (no trailing slash).
 4. Click **Deploy**.
 
@@ -106,3 +108,19 @@ to new deployments.
   (`docker run -p 5432:5432 -e POSTGRES_PASSWORD=pw pgvector/pgvector:pg17`), install only
   `requirements.txt`, and start the backend with `VERCEL=1 VECTOR_STORE=pgvector FILE_STORAGE=database
   DATABASE_URL=postgres://postgres:pw@localhost:5432/postgres uvicorn api.index:app`.
+
+## Deploying with the CLI instead of the dashboard
+
+```bash
+npm i -g vercel
+```
+
+```bash
+cd backend && vercel link --project <api-project> && vercel integration add neon && vercel deploy --prod
+```
+
+```bash
+cd frontend && vercel link --project <web-project> && vercel deploy --prod
+```
+
+Set the environment variables with `vercel env add <NAME> production` before the first deploy, as listed above.

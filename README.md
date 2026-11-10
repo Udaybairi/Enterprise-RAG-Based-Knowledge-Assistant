@@ -70,6 +70,9 @@ Built with **FastAPI · LangChain · Google Gemini · ChromaDB / FAISS · Postgr
     citation accuracy, answer F1, hallucination rate, refusal accuracy and latency.
   - Compares chunking × retrieval strategies, with a UI dashboard and a CLI.
 
+**Live deployment (Vercel):** frontend https://enterprise-rag-web-two.vercel.app · API
+https://enterprise-rag-api-pi.vercel.app (`/api/health`, `/api/docs`).
+
 **Deploying to Vercel?** Follow **[docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)** (frontend + serverless backend
 + Neon Postgres with pgvector).
 
