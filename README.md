@@ -35,8 +35,8 @@ Built with **FastAPI · LangChain · Google Gemini · ChromaDB / FAISS · Postgr
   - task-type aware (separate document and query embeddings), with configurable dimensionality
   - content-hash **embedding cache**, so identical text is never embedded twice
   - incremental re-processing
-- **Vector stores**: ChromaDB (persistent) and FAISS behind one abstraction, with one isolated namespace per
-  collection.
+- **Vector stores**: ChromaDB (persistent), FAISS and **PostgreSQL pgvector** behind one abstraction, with one
+  isolated namespace per collection.
 - **Retrieval**:
   - semantic, BM25 keyword, **hybrid** (weighted reciprocal-rank fusion) and **MMR** search
   - metadata filters (documents, file types), top-k and a similarity threshold
@@ -70,6 +70,9 @@ Built with **FastAPI · LangChain · Google Gemini · ChromaDB / FAISS · Postgr
     citation accuracy, answer F1, hallucination rate, refusal accuracy and latency.
   - Compares chunking × retrieval strategies, with a UI dashboard and a CLI.
 
+**Deploying to Vercel?** Follow **[docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)** (frontend + serverless backend
++ Neon Postgres with pgvector).
+
 See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the architecture, component interactions, database
 schema and security model.
 
@@ -91,6 +94,9 @@ python -m venv .venv && source .venv/bin/activate
 ```bash
 pip install -r requirements-dev.txt
 ```
+
+(`requirements.txt` is the slim set used on Vercel; `requirements-local.txt` adds ChromaDB, FAISS and the
+LangChain community loaders; `requirements-dev.txt` adds the test tools.)
 
 ```bash
 cp .env.example .env
@@ -162,7 +168,8 @@ important ones:
 | `GEMINI_UTILITY_MODEL` | `gemini-flash-lite-latest` | Query rewriting, expansion, LLM reranking, judging |
 | `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Embedding model (`gemini-embedding-2` is also supported) |
 | `EMBEDDING_DIMENSION` | `768` | Output dimensionality (Matryoshka truncation) |
-| `VECTOR_STORE` | `chroma` | `chroma` or `faiss` |
+| `VECTOR_STORE` | `chroma` | `chroma`, `faiss` or `pgvector` |
+| `FILE_STORAGE` | `local` | `local` (disk) or `database` (Postgres; for serverless) |
 | `CHUNKING_STRATEGY` | `structure` | `recursive`, `token`, `semantic`, `structure` |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `1000` / `150` | In characters |
 | `RETRIEVAL_STRATEGY` | `hybrid` | `semantic`, `hybrid`, `mmr`, `keyword` |
@@ -232,23 +239,33 @@ cd backend && TEST_VECTOR_STORE=faiss pytest -q
 cd backend && TEST_DATABASE_URL=postgresql+psycopg://user:pass@localhost:5432/test pytest -q
 ```
 
+To test the Vercel configuration (pgvector, files in Postgres, serverless mode), point the tests at a database
+with the pgvector extension:
+
+```bash
+cd backend && VERCEL=1 FILE_STORAGE=database TEST_VECTOR_STORE=pgvector TEST_DATABASE_URL=postgres://user:pass@localhost:5432/test TEST_PGVECTOR_URL=postgresql+psycopg://user:pass@localhost:5432/test pytest -q
+```
+
 ```bash
 cd frontend && npm run lint && npm run build
 ```
 
-The 75 backend tests run offline with the deterministic provider. They cover:
+The 88 backend tests run offline with the deterministic provider. They cover:
 
 - loaders for every format, preprocessing, and all four chunkers
-- both vector stores, MMR/RRF and the rerankers
+- all vector stores (Chroma, FAISS, pgvector, in-memory), MMR/RRF and the rerankers
 - citation validation, guardrails, embedding cache, retries and Gemini request batching (mocked client)
 - the full HTTP API: auth, RBAC, **tenant isolation**, ingestion, search with every strategy, streaming chat,
   follow-ups, regeneration, refusals, re-processing without stale vectors, deletion cleanup, audit logs
 - the evaluation harness
 
-CI (`.github/workflows/ci.yml`) runs the suite on SQLite + Chroma, SQLite + FAISS and PostgreSQL, and builds the
-frontend.
+CI (`.github/workflows/ci.yml`) runs the suite on SQLite + Chroma, SQLite + FAISS, PostgreSQL, and the Vercel
+configuration (slim install + pgvector + files in Postgres), and builds the frontend.
 
 ## Deployment notes
+
+**Vercel:** see [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md). **Docker / VM / container platforms:** use
+`docker-compose.yml` or the two Dockerfiles. General notes:
 
 - Set `ENVIRONMENT=production`. The API then refuses to start without a strong `JWT_SECRET_KEY`.
 - Use PostgreSQL, and put the API behind TLS: a reverse proxy (`--proxy-headers` is enabled) or a managed load
@@ -275,14 +292,15 @@ backend/app
 ├── ingestion/      loaders, validation, preprocessing, deduplication, pipeline
 ├── chunking/       recursive, token, structure, semantic chunkers + factory
 ├── embeddings/     gemini_embeddings, fake_embeddings, cache, factory
-├── vectorstore/    base abstraction, faiss_store, chroma_store
+├── vectorstore/    base abstraction, faiss_store, chroma_store, pgvector_store, memory_store
 ├── retrieval/      semantic_search (+MMR), hybrid_search (RRF), keyword_index (BM25), reranker, retriever
 ├── rag/            prompts, guardrails, query_rewriter, context_builder, generator, citation_manager, chain
 ├── llm/            Gemini client, offline client, retry/rate limiting
 ├── evaluation/     metrics, test_pipeline (strategy comparison), data/ (corpus + gold dataset)
 ├── database/       models, repositories, session
 ├── schemas/        Pydantic request/response models
-└── services/       document lifecycle, background jobs, model check, suggestions
+└── services/       document lifecycle, file storage, background jobs, model check, suggestions
+backend/api/index.py, backend/vercel.json   Vercel entrypoint and function config
 frontend/
 ├── app/            (auth)/login, register · (app)/ dashboard, chat, documents, collections, evaluation, settings
 ├── components/     AppShell, ChatMessage + citation cards, DocumentViewer, UploadDropzone, ui primitives

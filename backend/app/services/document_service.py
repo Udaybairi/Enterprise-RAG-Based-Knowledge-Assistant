@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import shutil
-from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -15,6 +15,7 @@ from app.ingestion.deduplication import file_hash
 from app.ingestion.loaders import MIME_TYPES
 from app.ingestion.validation import safe_filename, validate_upload
 from app.retrieval.keyword_index import keyword_index
+from app.services import file_storage
 from app.services.jobs import submit_processing
 from app.vectorstore.factory import get_vector_store
 
@@ -32,11 +33,7 @@ def create_document(db: Session, user: User, collection: Collection, filename: s
                    size_bytes=len(data), content_hash=digest, status=DocumentStatus.pending.value, meta={})
     db.add(doc)
     db.flush()
-    target_dir = get_settings().uploads_dir / collection.id
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target = target_dir / f"{doc.id}{ext}"
-    target.write_bytes(data)
-    doc.stored_path = str(target)
+    file_storage.save(db, doc, data, ext)
     DocumentRepository(db).add_log(doc.id, "upload", f"Uploaded {doc.filename} ({len(data)} bytes)")
     return doc
 
@@ -45,8 +42,18 @@ def schedule(document_id: str, **kwargs) -> None:
     submit_processing(document_id, **kwargs)
 
 
+def is_stale(doc: Document) -> bool:
+    """A document stuck in processing (e.g. the worker/function was killed) can be retried."""
+    updated = doc.updated_at
+    if updated is None:
+        return True
+    if updated.tzinfo is None:
+        updated = updated.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc) - updated > timedelta(minutes=get_settings().stale_processing_minutes)
+
+
 def reset_for_reprocess(db: Session, doc: Document) -> None:
-    if doc.status == DocumentStatus.processing.value:
+    if doc.status == DocumentStatus.processing.value and not is_stale(doc):
         raise ConflictError("Document is currently being processed")
     doc.status = DocumentStatus.pending.value
     doc.error_message = None
@@ -59,12 +66,11 @@ def delete_document(db: Session, doc: Document) -> None:
     store = get_vector_store()
     if ids:
         store.delete(doc.collection_id, ids)
-    path = Path(doc.stored_path) if doc.stored_path else None
+    stored_path = doc.stored_path
     collection_id = doc.collection_id
     db.delete(doc)
     db.flush()
-    if path and path.exists():
-        path.unlink()
+    file_storage.delete_local(stored_path)
     keyword_index.invalidate(collection_id)
     log.info("Deleted document %s (%d vectors)", doc.id, len(ids))
 

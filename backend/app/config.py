@@ -6,11 +6,13 @@ code changes.
 """
 from __future__ import annotations
 
+import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -31,6 +33,17 @@ class Settings(BaseSettings):
     log_json: bool = False
     # NoDecode: accept plain comma-separated values (as documented) as well as JSON lists.
     cors_origins: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ["http://localhost:3000"])
+    # Optional regex for additional allowed origins, e.g. Vercel preview URLs:
+    #   ^https://my-frontend(-[a-z0-9-]+)?\.vercel\.app$
+    cors_origin_regex: str | None = None
+
+    # ---- runtime -----------------------------------------------------------
+    # Serverless mode (Vercel, auto-detected via the VERCEL env var): no background threads
+    # (documents are processed inside the upload request), no connection pooling inside the
+    # function, and only /tmp is writable.
+    serverless: bool = False
+    # Documents stuck in "processing" longer than this (e.g. a killed function) may be re-processed.
+    stale_processing_minutes: int = 15
 
     # ---- security ----------------------------------------------------------
     # No usable default in production: startup refuses to run with the dev key.
@@ -56,6 +69,9 @@ class Settings(BaseSettings):
     # When unset, a SQLite file inside DATA_DIR is used (fine for development / single node).
     database_url: str | None = None
     data_dir: Path = BACKEND_DIR / "data"
+    # Where original uploaded files live: "local" (DATA_DIR/uploads) or "database" (Postgres BYTEA;
+    # required on serverless platforms that have no persistent disk).
+    file_storage: Literal["local", "database"] = "local"
     max_upload_size_mb: int = 50
     allowed_extensions: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [".pdf", ".docx", ".txt", ".csv", ".xlsx", ".pptx", ".md", ".markdown"]
@@ -81,7 +97,8 @@ class Settings(BaseSettings):
     embedding_requests_per_minute: int = 1200
 
     # ---- vector store ------------------------------------------------------
-    vector_store: Literal["faiss", "chroma"] = "chroma"
+    # chroma / faiss: local disk. pgvector: PostgreSQL with the pgvector extension (serverless-friendly).
+    vector_store: Literal["faiss", "chroma", "pgvector"] = "chroma"
 
     # ---- chunking ----------------------------------------------------------
     chunking_strategy: Literal["recursive", "token", "semantic", "structure"] = "structure"
@@ -113,9 +130,24 @@ class Settings(BaseSettings):
             return [s.strip() for s in v.split(",") if s.strip()]
         return v
 
+    @model_validator(mode="after")
+    def _serverless_defaults(self):
+        if os.getenv("VERCEL"):
+            self.serverless = True
+        if self.serverless and str(self.data_dir).startswith(str(BACKEND_DIR)):
+            # the deployment bundle is read-only on serverless platforms; only /tmp is writable
+            self.data_dir = Path(tempfile.gettempdir()) / "rag-data"
+        return self
+
     @property
     def effective_database_url(self) -> str:
-        return self.database_url or f"sqlite:///{self.data_dir / 'app.db'}"
+        url = self.database_url or f"sqlite:///{self.data_dir / 'app.db'}"
+        # Hosted Postgres providers (Neon, Vercel, Heroku...) hand out postgres:// URLs;
+        # SQLAlchemy needs the driver spelled out.
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
 
     @property
     def uploads_dir(self) -> Path:

@@ -18,10 +18,16 @@ from app.core.logging import get_logger, request_id_var, setup_logging
 from app.core.security import hash_password
 from app.database.models import Role
 from app.database.repositories import CollectionRepository, UserRepository
-from app.database.session import init_db, session_scope
+from app.database.session import get_engine, init_hooks, session_scope
 
 log = get_logger("app")
 _INSECURE_DEFAULT_SECRET = "dev-only-insecure-secret-change-me-please-0123456789"
+
+
+def _check_secrets() -> None:
+    s = get_settings()
+    if s.environment == "production" and (s.jwt_secret_key == _INSECURE_DEFAULT_SECRET or len(s.jwt_secret_key) < 32):
+        raise RuntimeError("JWT_SECRET_KEY must be set to a strong secret (>= 32 chars) in production")
 
 
 def _bootstrap_admin() -> None:
@@ -42,22 +48,27 @@ def _bootstrap_admin() -> None:
 async def lifespan(app: FastAPI):
     s = get_settings()
     setup_logging(s.log_level, s.log_json)
-    if s.environment == "production" and (s.jwt_secret_key == _INSECURE_DEFAULT_SECRET or len(s.jwt_secret_key) < 32):
-        raise RuntimeError("JWT_SECRET_KEY must be set to a strong secret (>= 32 chars) in production")
+    _check_secrets()
     if s.llm_provider == "gemini" and not s.google_api_key:
         log.warning("GOOGLE_API_KEY is not set: ingestion and chat will fail until it is configured "
                     "(or set LLM_PROVIDER=fake for an offline demo).")
-    init_db()
-    _bootstrap_admin()
+    get_engine()  # creates tables and runs init hooks (bootstrap admin) once
     from app.services.jobs import requeue_unfinished, shutdown
     from app.services.model_check import check_models
 
-    requeue_unfinished()
-    if s.environment != "test":
-        threading.Thread(target=check_models, daemon=True, name="model-check").start()
+    if not s.serverless:
+        # Long-lived server: resume interrupted jobs and verify models in the background.
+        # Serverless: no background work outlives a request; models are verified on demand.
+        requeue_unfinished()
+        if s.environment != "test":
+            threading.Thread(target=check_models, daemon=True, name="model-check").start()
     log.info("%s started (provider=%s, vector_store=%s)", s.app_name, s.llm_provider, s.vector_store)
     yield
     shutdown()
+
+
+# Also run on first database use, for runtimes that do not deliver ASGI lifespan events.
+init_hooks.extend([_check_secrets, _bootstrap_admin])
 
 
 def create_app() -> FastAPI:
@@ -68,7 +79,8 @@ def create_app() -> FastAPI:
         docs_url="/api/docs", openapi_url="/api/openapi.json", redoc_url=None,
     )
     app.add_middleware(
-        CORSMiddleware, allow_origins=s.cors_origins, allow_credentials=True,
+        CORSMiddleware, allow_origins=s.cors_origins, allow_origin_regex=s.cors_origin_regex,
+        allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"], allow_headers=["Authorization", "Content-Type"],
     )
 

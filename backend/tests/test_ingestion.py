@@ -105,3 +105,27 @@ def test_near_duplicate_detection():
     assert jaccard(shingles(a), shingles(b)) == 1.0
     kept, removed = dedupe_near([a, b, "Completely different sentence about finance reports"], key=lambda x: x)
     assert removed == 1 and len(kept) == 2
+
+
+@pytest.mark.parametrize("maker,ext", [(sf.make_pdf, ".pdf"), (sf.make_csv, ".csv"), (sf.make_txt, ".txt"),
+                                       (sf.make_markdown, ".md"), (sf.make_docx, ".docx")])
+def test_builtin_loaders_without_langchain_community(tmp_path, monkeypatch, maker, ext):
+    """The slim serverless install has no langchain-community; built-in readers must give the same result."""
+    from app.ingestion import loaders
+
+    path = maker(tmp_path / f"f{ext}")
+    with_lc = load_document(path)
+    monkeypatch.setattr(loaders, "_lc_loaders", lambda: None)
+    without = load_document(path)
+    assert without.page_count == with_lc.page_count
+    assert [b.page_number for b in without.blocks] == [b.page_number for b in with_lc.blocks]
+    assert without.text.split() == with_lc.text.split()
+
+
+def test_text_decoding_fallback(tmp_path, monkeypatch):
+    from app.ingestion import loaders
+
+    monkeypatch.setattr(loaders, "_lc_loaders", lambda: None)
+    p = tmp_path / "latin.txt"
+    p.write_bytes("Café prices in Zürich are high.".encode("cp1252"))
+    assert "Zürich" in load_document(p).text

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, Response, UploadFile, status
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import (
@@ -31,7 +30,7 @@ from app.schemas.documents import (
     ReprocessRequest,
     UploadResult,
 )
-from app.services import document_service
+from app.services import document_service, file_storage
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 MAX_FILES_PER_REQUEST = 20
@@ -109,15 +108,13 @@ def get_logs(document_id: str, user: User = Depends(get_current_user), db: Sessi
 def download_file(document_id: str, request: Request, user: User = Depends(get_current_user),
                   db: Session = Depends(get_db)):
     d = readable_document(db, user, document_id)
-    path = Path(d.stored_path)
-    root = get_settings().uploads_dir.resolve()
-    if not path.resolve().is_relative_to(root) or not path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
+    data = file_storage.read_bytes(db, d)
     audit(db, request, user, "document.view", "document", d.id)
     db.commit()
     disposition = "inline" if d.file_type in ("pdf", "txt", "md", "markdown", "csv") else "attachment"
-    return FileResponse(path, media_type=d.mime_type, filename=d.filename, content_disposition_type=disposition,
-                        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
+    return Response(content=data, media_type=d.mime_type, headers={
+        "Content-Disposition": f"{disposition}; filename*=UTF-8''{quote(d.filename)}",
+        "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"})
 
 
 @router.get("/{document_id}/preview", response_model=DocumentPreview)
@@ -157,7 +154,7 @@ def reprocess(document_id: str, request: Request, body: ReprocessRequest | None 
 def delete_document(document_id: str, request: Request, user: User = Depends(get_current_user),
                     db: Session = Depends(get_db)):
     d = writable_document(db, user, document_id)
-    if d.status == "processing":
+    if d.status == "processing" and not document_service.is_stale(d):
         raise HTTPException(status_code=409, detail="Document is being processed; try again shortly")
     name = d.filename
     document_service.delete_document(db, d)

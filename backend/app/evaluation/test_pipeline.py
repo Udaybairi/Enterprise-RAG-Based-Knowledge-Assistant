@@ -1,6 +1,6 @@
 """Evaluation harness comparing chunking × retrieval strategies on a gold dataset.
 
-The corpus is ingested into an *isolated*, temporary FAISS index (never the
+The corpus is ingested into an *isolated*, in-memory vector index (never the
 production store) once per chunking strategy, using the same loaders,
 preprocessing, chunkers, embeddings, retriever, reranker and RAG chain as
 production. Each configuration is scored with the metrics in ``metrics.py``.
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import tempfile
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -37,7 +36,7 @@ from app.rag.citation_manager import is_refusal
 from app.retrieval.retriever import RetrievalConfig, Retriever
 from app.retrieval.types import RetrievedChunk
 from app.utils.text import keyword_tokens
-from app.vectorstore.faiss_store import FaissVectorStore
+from app.vectorstore.memory_store import MemoryVectorStore
 
 log = get_logger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
@@ -86,7 +85,7 @@ class InMemoryCorpus:
         return out
 
 
-def build_index(strategy: str, corpus_dir: Path, store: FaissVectorStore) -> InMemoryCorpus:
+def build_index(strategy: str, corpus_dir: Path, store: MemoryVectorStore) -> InMemoryCorpus:
     embedder = get_embedder()
     chunks: list[_Chunk] = []
     texts: list[str] = []
@@ -179,21 +178,21 @@ def run_evaluation(chunking_strategies: list[str], retrieval_strategies: list[st
     configs = []
     started = time.perf_counter()
     for chunking in chunking_strategies:
-        with tempfile.TemporaryDirectory(prefix="rag-eval-") as tmp:
-            store = FaissVectorStore(Path(tmp), settings.embedding_dimension)
-            t0 = time.perf_counter()
-            corpus = build_index(chunking, corpus_dir, store)
-            index_ms = (time.perf_counter() - t0) * 1000
-            retriever = Retriever(store=store, llm=llm, keyword_search=corpus.keyword_search,
-                                  hydrate=corpus.hydrate)
-            chain = RAGChain(llm=llm, retriever=retriever)
-            for retrieval in retrieval_strategies:
-                cfg = RetrievalConfig.from_settings(strategy=retrieval, top_k=top_k)
-                log.info("Evaluating chunking=%s retrieval=%s", chunking, retrieval)
-                res = evaluate_config(chain, retriever, corpus, dataset, cfg, evaluate_generation,
-                                      llm if llm.provider != "fake" else None)
-                configs.append({"chunking": chunking, "retrieval": retrieval, "chunks": len(corpus.ids),
-                                "index_ms": round(index_ms, 1), **res})
+        # isolated, in-memory index per chunking strategy (never touches the production store)
+        store = MemoryVectorStore(settings.embedding_dimension)
+        t0 = time.perf_counter()
+        corpus = build_index(chunking, corpus_dir, store)
+        index_ms = (time.perf_counter() - t0) * 1000
+        retriever = Retriever(store=store, llm=llm, keyword_search=corpus.keyword_search,
+                              hydrate=corpus.hydrate)
+        chain = RAGChain(llm=llm, retriever=retriever)
+        for retrieval in retrieval_strategies:
+            cfg = RetrievalConfig.from_settings(strategy=retrieval, top_k=top_k)
+            log.info("Evaluating chunking=%s retrieval=%s", chunking, retrieval)
+            res = evaluate_config(chain, retriever, corpus, dataset, cfg, evaluate_generation,
+                                  llm if llm.provider != "fake" else None)
+            configs.append({"chunking": chunking, "retrieval": retrieval, "chunks": len(corpus.ids),
+                            "index_ms": round(index_ms, 1), **res})
 
     def score(c):
         m = c["metrics"]
@@ -237,7 +236,7 @@ def run_and_store(run_id: str, **kwargs) -> None:
 
 def main() -> None:  # pragma: no cover - CLI
     from app.core.logging import setup_logging
-    from app.database.session import init_db
+    from app.database.session import get_engine
 
     p = argparse.ArgumentParser(description="Compare chunking and retrieval strategies")
     p.add_argument("--chunking", nargs="+", default=["recursive", "structure", "semantic"])
@@ -247,7 +246,7 @@ def main() -> None:  # pragma: no cover - CLI
     p.add_argument("--output", type=Path)
     a = p.parse_args()
     setup_logging("INFO")
-    init_db()
+    get_engine()
     res = run_evaluation(a.chunking, a.retrieval, a.top_k, not a.no_generation)
     header = f"{'chunking':<11}{'retrieval':<10}{'P@k':>7}{'R@k':>7}{'MRR':>7}{'ctxRel':>8}"
     if not a.no_generation:

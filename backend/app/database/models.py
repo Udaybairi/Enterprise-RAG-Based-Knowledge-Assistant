@@ -123,6 +123,15 @@ class Document(Base):
     )
 
 
+class DocumentFile(Base):
+    """Original file bytes when FILE_STORAGE=database (serverless deployments)."""
+
+    __tablename__ = "document_files"
+
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+
+
 class Chunk(Base):
     __tablename__ = "chunks"
     __table_args__ = (Index("ix_chunks_collection_doc", "collection_id", "document_id"),)

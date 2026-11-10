@@ -20,12 +20,25 @@ from app.ingestion.pipeline import process_document
 
 log = get_logger(__name__)
 _executor = ThreadPoolExecutor(max_workers=int(os.getenv("INGESTION_WORKERS", "2")), thread_name_prefix="ingest")
-# Tests set this to run jobs inline for determinism.
-SYNC_MODE = os.getenv("INGESTION_SYNC", "false").lower() == "true"
+def run_inline() -> bool:
+    """Run jobs inside the request: in tests (determinism) and on serverless platforms, where
+    nothing may keep running after the response has been sent."""
+    from app.config import get_settings
+
+    return os.getenv("INGESTION_SYNC", "false").lower() == "true" or get_settings().serverless
+
+
+def submit(fn, *args, **kwargs) -> Future | None:
+    if run_inline():
+        fn(*args, **kwargs)
+        return None
+    fut = _executor.submit(fn, *args, **kwargs)
+    fut.add_done_callback(lambda f: f.exception() and log.error("job failed: %s", f.exception()))
+    return fut
 
 
 def submit_processing(document_id: str, **kwargs) -> Future | None:
-    if SYNC_MODE:
+    if run_inline():
         process_document(document_id, **kwargs)
         return None
     fut = _executor.submit(process_document, document_id, **kwargs)

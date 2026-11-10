@@ -2,13 +2,12 @@
 
 import clsx from "clsx";
 import { UploadCloud } from "lucide-react";
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
 import { api } from "@/services/api";
 import type { Collection } from "@/types";
 import { Spinner } from "./ui";
 
 const ACCEPT = ".pdf,.docx,.txt,.csv,.xlsx,.pptx,.md,.markdown";
-const MAX_MB = 50;
 
 export function UploadDropzone({
   collections, defaultCollectionId, onUploaded,
@@ -18,32 +17,50 @@ export function UploadDropzone({
   const [strategy, setStrategy] = useState("");
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [maxMb, setMaxMb] = useState(50);
   const input = useRef<HTMLInputElement>(null);
+
+  // the server decides the limit (e.g. 4 MB on Vercel, where request bodies are capped at 4.5 MB)
+  useEffect(() => {
+    api.settings().then((s) => setMaxMb(s.upload.max_size_mb)).catch(() => undefined);
+  }, []);
 
   const upload = async (list: FileList | File[]) => {
     const files = Array.from(list);
     if (!files.length) return;
     const allowed = ACCEPT.split(",");
     const invalid = files.filter(
-      (f) => !allowed.includes(`.${f.name.split(".").pop()?.toLowerCase()}`) || f.size > MAX_MB * 1024 * 1024,
+      (f) => !allowed.includes(`.${f.name.split(".").pop()?.toLowerCase()}`) || f.size > maxMb * 1024 * 1024,
     );
     const ok = files.filter((f) => !invalid.includes(f));
     if (!ok.length) {
-      onUploaded(`Unsupported file type or larger than ${MAX_MB} MB: ${invalid.map((f) => f.name).join(", ")}`, true);
+      onUploaded(`Unsupported file type or larger than ${maxMb} MB: ${invalid.map((f) => f.name).join(", ")}`, true);
       return;
     }
     setBusy(true);
+    // One request per file: keeps each request under platform body-size limits and, on serverless
+    // deployments where documents are processed during the upload request, within the time limit.
+    let accepted = 0;
+    const rejected = invalid.map((f) => `${f.name} (unsupported or larger than ${maxMb} MB)`);
     try {
-      const res = await api.upload(ok, collectionId || undefined, strategy || undefined);
-      const rejected = [...invalid.map((f) => `${f.name} (unsupported or too large)`),
-        ...res.rejected.map((r) => `${r.filename}: ${r.reason}`)];
-      const msg = `${res.documents.length} document(s) queued for processing.` +
+      for (const [i, f] of ok.entries()) {
+        setProgress(`Uploading ${i + 1} of ${ok.length}: ${f.name}`);
+        try {
+          const res = await api.upload([f], collectionId || undefined, strategy || undefined);
+          accepted += res.documents.length;
+          rejected.push(...res.rejected.map((r) => `${r.filename}: ${r.reason}`));
+        } catch (e) {
+          rejected.push(`${f.name}: ${(e as Error).message}`);
+        }
+        onUploaded(`${accepted} of ${ok.length} uploaded…`);
+      }
+      const msg = `${accepted} document(s) uploaded for processing.` +
         (rejected.length ? ` Rejected: ${rejected.join("; ")}` : "");
-      onUploaded(msg, res.documents.length === 0);
-    } catch (e) {
-      onUploaded((e as Error).message, true);
+      onUploaded(msg, accepted === 0);
     } finally {
       setBusy(false);
+      setProgress(null);
       if (input.current) input.current.value = "";
     }
   };
@@ -88,8 +105,8 @@ export function UploadDropzone({
           drag ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10" : "border-slate-300 hover:border-brand-400 dark:border-slate-700",
         )}>
         {busy ? <Spinner className="h-8 w-8 text-brand-600" /> : <UploadCloud className="h-8 w-8 text-brand-600" />}
-        <p className="mt-3 text-sm font-medium">{busy ? "Uploading…" : "Drop files here or click to browse"}</p>
-        <p className="mt-1 text-xs text-slate-500">PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown · up to {MAX_MB} MB each · max 20 files</p>
+        <p className="mt-3 text-sm font-medium">{busy ? (progress ?? "Uploading…") : "Drop files here or click to browse"}</p>
+        <p className="mt-1 text-xs text-slate-500">PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown · up to {maxMb} MB each</p>
         <input ref={input} type="file" multiple accept={ACCEPT} className="hidden"
           onChange={(e) => e.target.files && upload(e.target.files)} />
       </div>

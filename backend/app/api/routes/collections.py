@@ -8,7 +8,7 @@ from app.database.models import Collection, User
 from app.database.repositories import CollectionRepository
 from app.database.session import get_db
 from app.schemas.collection import CollectionCreate, CollectionOut, CollectionUpdate
-from app.services.document_service import delete_collection_data
+from app.services.document_service import delete_collection_data, is_stale
 
 router = APIRouter(prefix="/api/collections", tags=["collections"])
 
@@ -74,7 +74,7 @@ def update_collection(collection_id: str, body: CollectionUpdate, request: Reque
 def delete_collection(collection_id: str, request: Request, user: User = Depends(get_current_user),
                       db: Session = Depends(get_db)):
     c = writable_collection(db, user, collection_id)
-    if any(d.status == "processing" for d in c.documents):
+    if any(d.status == "processing" and not is_stale(d) for d in c.documents):
         raise HTTPException(status_code=409, detail="Wait until documents finish processing before deleting")
     name = c.name
     delete_collection_data(db, c)

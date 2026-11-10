@@ -1,17 +1,41 @@
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pytest
 
 from app.embeddings.gemini_embeddings import l2_normalize
-from app.vectorstore.chroma_store import ChromaVectorStore
-from app.vectorstore.faiss_store import FaissVectorStore
+from app.vectorstore.memory_store import MemoryVectorStore
+
+PGVECTOR_URL = os.environ.get("TEST_PGVECTOR_URL")  # e.g. postgresql+psycopg://rag:rag@localhost:5434/rag
 
 
-@pytest.fixture(params=["faiss", "chroma"])
+@pytest.fixture(params=["faiss", "chroma", "pgvector"])
 def store_factory(request, tmp_path):
-    cls = FaissVectorStore if request.param == "faiss" else ChromaVectorStore
-    return lambda: cls(tmp_path, 16)
+    if request.param == "faiss":
+        pytest.importorskip("faiss")
+        from app.vectorstore.faiss_store import FaissVectorStore
+
+        yield lambda: FaissVectorStore(tmp_path, 16)
+        return
+    if request.param == "chroma":
+        pytest.importorskip("chromadb")
+        from app.vectorstore.chroma_store import ChromaVectorStore
+
+        yield lambda: ChromaVectorStore(tmp_path, 16)
+        return
+    if not PGVECTOR_URL:
+        pytest.skip("set TEST_PGVECTOR_URL to test the pgvector store")
+    from sqlalchemy import create_engine, text
+
+    from app.vectorstore.pgvector_store import PgVectorStore
+
+    engine = create_engine(PGVECTOR_URL, connect_args={"prepare_threshold": None})
+    with engine.begin() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS test_vectors_16"))
+    yield lambda: PgVectorStore(16, engine=engine, table="test_vectors_16")
+    engine.dispose()
 
 
 def _vecs(n, seed=0):
@@ -57,6 +81,16 @@ def test_include_vectors_for_mmr(store_factory):
 
 
 def test_dimension_mismatch_rejected(tmp_path):
-    s = FaissVectorStore(tmp_path, 16)
+    s = MemoryVectorStore(16)
     with pytest.raises(ValueError):
         s.upsert("ns", ["a"], np.zeros((1, 8), dtype=np.float32), [{}])
+
+
+def test_memory_store_basics():
+    s = MemoryVectorStore(16)
+    v = _vecs(5)
+    s.upsert("ns", [f"c{i}" for i in range(5)], v, [{"document_id": "a" if i < 2 else "b"} for i in range(5)])
+    assert s.search("ns", v[3], 1)[0].id == "c3"
+    assert all(h.metadata["document_id"] == "a" for h in s.search("ns", v[3], 5, where={"document_id": ["a"]}))
+    s.delete("ns", ["c3"])
+    assert s.count("ns") == 4

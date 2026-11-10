@@ -14,7 +14,6 @@ import threading
 import time
 from collections import Counter
 from datetime import datetime, timezone
-from pathlib import Path
 
 from app.chunking.factory import get_chunker
 from app.config import get_settings
@@ -29,6 +28,7 @@ from app.ingestion.loaders import load_document
 from app.ingestion.preprocessing import preprocess
 from app.ingestion.types import ChunkData
 from app.retrieval.keyword_index import keyword_index
+from app.services import file_storage
 from app.utils.text import sha256_text
 from app.vectorstore.factory import get_vector_store
 
@@ -95,12 +95,12 @@ def _process(document_id: str, strategy, chunk_size, chunk_overlap) -> None:
         doc.status = DocumentStatus.processing.value
         doc.error_message = None
         DocumentRepository(db).add_log(document_id, "start", f"Processing started (strategy={strategy})")
-        path, ext, filename, collection_id = Path(doc.stored_path), "." + doc.file_type, doc.filename, doc.collection_id
+        ext, filename, collection_id = "." + doc.file_type, doc.filename, doc.collection_id
         old_ids = set(ChunkRepository(db).ids_for_document(document_id))
 
     new_ids: list[str] = []
     try:
-        with _Stage(document_id, "extract") as st:
+        with _Stage(document_id, "extract") as st, file_storage.materialize(document_id) as path:
             extracted = load_document(path, ext)
             st.done(f"Extracted {len(extracted.blocks)} raw blocks"
                     + (f" from {extracted.page_count} pages" if extracted.page_count else ""))

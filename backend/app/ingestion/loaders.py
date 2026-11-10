@@ -11,10 +11,14 @@ structured path fails.
 """
 from __future__ import annotations
 
+import csv
+import io
 import re
 import warnings
 from collections.abc import Callable
 from pathlib import Path
+
+from langchain_core.documents import Document
 
 from app.core.exceptions import DocumentProcessingError
 from app.core.logging import get_logger
@@ -24,6 +28,31 @@ log = get_logger(__name__)
 warnings.filterwarnings("ignore", message=".*langchain-community.*")
 
 ROWS_PER_BLOCK = 25
+
+
+def _lc_loaders():
+    """LangChain community loaders when installed (full install); ``None`` in the slim serverless
+    install, where equivalent built-in readers below are used instead."""
+    try:
+        from langchain_community import document_loaders
+
+        return document_loaders
+    except ImportError:
+        return None
+
+
+def _decode(data: bytes) -> str:
+    for enc in ("utf-8-sig", "utf-16") if data[:2] in (b"\xff\xfe", b"\xfe\xff") else ("utf-8-sig",):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            pass
+    for enc in ("cp1252", "latin-1"):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    raise DocumentProcessingError("Could not decode text file")
 
 
 def _table_to_markdown(rows: list[list[str]]) -> str:
@@ -38,11 +67,22 @@ def _table_to_markdown(rows: list[list[str]]) -> str:
 
 
 # ---------------------------------------------------------------------------- PDF
-def load_pdf(path: Path) -> ExtractedDocument:
-    from langchain_community.document_loaders import PyPDFLoader
+def _pypdf_pages(path: Path) -> list[Document]:
+    from pypdf import PdfReader
 
+    reader = PdfReader(str(path))
+    info = reader.metadata or {}
+    total = len(reader.pages)
+    return [Document(page_content=p.extract_text() or "",
+                     metadata={"page": i, "total_pages": total, "title": info.get("/Title"),
+                               "author": info.get("/Author")})
+            for i, p in enumerate(reader.pages)]
+
+
+def load_pdf(path: Path) -> ExtractedDocument:
+    lc = _lc_loaders()
     try:
-        pages = PyPDFLoader(str(path), mode="page").load()
+        pages = lc.PyPDFLoader(str(path), mode="page").load() if lc else _pypdf_pages(path)
     except Exception as exc:  # noqa: BLE001
         raise DocumentProcessingError(f"Could not read PDF (corrupted or encrypted?): {exc}") from exc
     blocks = []
@@ -94,24 +134,30 @@ def load_docx(path: Path) -> ExtractedDocument:
         raise
     except Exception as exc:  # noqa: BLE001
         log.warning("python-docx failed (%s); falling back to Docx2txtLoader", exc)
-        from langchain_community.document_loaders import Docx2txtLoader
-
+        lc = _lc_loaders()
         try:
-            docs = Docx2txtLoader(str(path)).load()
+            if lc:
+                texts = [d.page_content for d in lc.Docx2txtLoader(str(path)).load()]
+            else:
+                import docx2txt
+
+                texts = [docx2txt.process(str(path))]
         except Exception as exc2:  # noqa: BLE001
             raise DocumentProcessingError(f"Could not read DOCX (corrupted?): {exc2}") from exc2
-        return ExtractedDocument([Block(d.page_content) for d in docs], 0, paginated=False)
+        return ExtractedDocument([Block(t, "text") for t in texts], 0, paginated=False)
 
 
 # ------------------------------------------------------------------- TXT / MD
 def load_text(path: Path) -> ExtractedDocument:
-    from langchain_community.document_loaders import TextLoader
-
+    lc = _lc_loaders()
     try:
-        docs = TextLoader(str(path), autodetect_encoding=True).load()
+        texts = ([d.page_content for d in lc.TextLoader(str(path), autodetect_encoding=True).load()]
+                 if lc else [_decode(path.read_bytes())])
+    except DocumentProcessingError:
+        raise
     except Exception as exc:  # noqa: BLE001
         raise DocumentProcessingError(f"Could not decode text file: {exc}") from exc
-    return ExtractedDocument([Block(d.page_content, "text") for d in docs], 0, paginated=False)
+    return ExtractedDocument([Block(t, "text") for t in texts], 0, paginated=False)
 
 
 def load_markdown(path: Path) -> ExtractedDocument:
@@ -146,11 +192,23 @@ def load_markdown(path: Path) -> ExtractedDocument:
 
 
 # ----------------------------------------------------------------------------- CSV
-def load_csv(path: Path) -> ExtractedDocument:
-    from langchain_community.document_loaders import CSVLoader
+def _csv_rows(path: Path) -> list[Document]:
+    """Same output format as LangChain's CSVLoader ("column: value" lines, ``row`` metadata)."""
+    reader = csv.DictReader(io.StringIO(_decode(path.read_bytes())))
+    out = []
+    for i, row in enumerate(reader):
+        content = "\n".join(f"{(k or '').strip()}: {(v or '').strip() if isinstance(v, str) else v}"
+                            for k, v in row.items())
+        out.append(Document(page_content=content, metadata={"row": i}))
+    return out
 
+
+def load_csv(path: Path) -> ExtractedDocument:
+    lc = _lc_loaders()
     try:
-        rows = CSVLoader(str(path), autodetect_encoding=True).load()
+        rows = lc.CSVLoader(str(path), autodetect_encoding=True).load() if lc else _csv_rows(path)
+    except DocumentProcessingError:
+        raise
     except Exception as exc:  # noqa: BLE001
         raise DocumentProcessingError(f"Could not parse CSV: {exc}") from exc
     blocks = []
@@ -231,9 +289,10 @@ def load_pptx(path: Path) -> ExtractedDocument:
 
 def _unstructured_fallback(path: Path, original: Exception) -> ExtractedDocument:
     try:
-        from langchain_community.document_loaders import UnstructuredFileLoader  # requires `unstructured`
-
-        docs = UnstructuredFileLoader(str(path), mode="elements").load()
+        lc = _lc_loaders()
+        if lc is None:
+            raise ImportError("langchain-community not installed")
+        docs = lc.UnstructuredFileLoader(str(path), mode="elements").load()  # requires `unstructured`
     except Exception as exc:  # noqa: BLE001
         raise DocumentProcessingError(f"Could not read file: {original}") from exc
     blocks = [Block(d.page_content, "paragraph", page_number=d.metadata.get("page_number")) for d in docs]

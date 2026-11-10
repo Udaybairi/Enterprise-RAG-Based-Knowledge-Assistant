@@ -8,8 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/data
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+COPY requirements.txt requirements-local.txt ./
+RUN pip install -r requirements-local.txt
 # Optional: pre-fetch the tokenizer used for chunk sizing (falls back to a heuristic when unavailable).
 RUN python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')" || echo "tiktoken encoding not prefetched"
 

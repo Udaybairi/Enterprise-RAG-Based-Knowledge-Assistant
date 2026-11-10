@@ -140,6 +140,8 @@ messages                       chunks                      processing_logs
 
 audit_logs: id, user_id, action, resource_type, resource_id, details JSON, ip_address, created_at
 evaluation_runs: id, created_by, status, config JSON, results JSON, error_message, created/finished_at
+document_files: document_id PK/FK (CASCADE), data BYTEA        (only with FILE_STORAGE=database)
+rag_vectors: (namespace, id) PK, embedding vector(dim), metadata JSONB   (only with VECTOR_STORE=pgvector)
 ```
 
 * Vectors live only in the vector store; chunk text lives in the DB (source of truth for citations, BM25 and
@@ -159,7 +161,25 @@ include_vectors) / get_vectors / count`. Implementations:
 * **FAISS** (`faiss_store.py`): `IndexIDMap2(IndexFlatIP)` on L2-normalised vectors (exact cosine), string↔int
   id map + metadata sidecar written atomically, over-fetch for filtered search, `reconstruct` for MMR.
 
-Select with `VECTOR_STORE=chroma|faiss`. Adding pgvector/Qdrant/etc. means implementing the same six methods.
+* **pgvector** (`pgvector_store.py`): one `rag_vectors` table in PostgreSQL (namespace column, `vector(dim)`,
+  JSONB metadata, HNSW cosine index), with iterative index scans so namespace and metadata filters stay
+  complete. Stateless, so it is the store used for serverless deployments (Vercel + Neon).
+* **in-memory** (`memory_store.py`): exact numpy search, used for the isolated evaluation index.
+
+Select with `VECTOR_STORE=chroma|faiss|pgvector`. Adding Qdrant etc. means implementing the same six methods.
+
+## 4a. Deployment modes
+
+| | Server / Docker | Serverless (Vercel) |
+|---|---|---|
+| Ingestion | background thread pool; jobs re-queued on restart | inside the upload request (`maxDuration` 300 s) |
+| Vectors | Chroma or FAISS on disk (or pgvector) | pgvector |
+| Original files | `DATA_DIR/uploads` | `document_files` table (BYTEA) |
+| DB connections | pooled | no pool in the function; PgBouncer-safe (no prepared statements) |
+| Startup | ASGI lifespan | lazy initialisation on first DB use (also covers runtimes without lifespan events) |
+| Keyword index | per-process BM25 cache | same, validated against a DB fingerprint so instances never serve stale results |
+
+See [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md).
 
 ## 5. Security model
 
@@ -178,7 +198,7 @@ Select with `VECTOR_STORE=chroma|faiss`. Adding pgvector/Qdrant/etc. means imple
 
 ## 6. Evaluation
 
-`app/evaluation/test_pipeline.py` ingests a gold corpus into a temporary, isolated FAISS index once per chunking
+`app/evaluation/test_pipeline.py` ingests a gold corpus into an isolated in-memory vector index once per chunking
 strategy and runs every retrieval strategy over `data/dataset.json` (question, reference answer, source
 documents, evidence spans, including unanswerable questions). Metrics (`metrics.py`): precision@k, recall@k
 (evidence coverage), hit rate, MRR, context relevance, answer relevance, faithfulness (Gemini-as-judge with a

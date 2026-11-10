@@ -1,6 +1,10 @@
+# Core dependencies. This slim set is what the Vercel (serverless) deployment installs:
+# it uses pgvector for vectors and built-in document readers, keeping the function bundle small.
+# For local development / Docker install requirements-local.txt (adds ChromaDB, FAISS, LangChain loaders).
+
 # --- API ---
 fastapi==0.162.2
-uvicorn[standard]==0.54.0
+uvicorn==0.54.0
 pydantic==2.14.3
 pydantic-settings==2.16.2
 email-validator>=2.2,<3
@@ -14,22 +18,19 @@ psycopg[binary]==3.3.8
 PyJWT==2.15.1
 bcrypt==5.0.0
 
-# --- LangChain (versions verified compatible together) ---
+# --- LangChain core (versions verified compatible together) ---
 langchain-core==1.7.6
-langchain-community==0.4.2
 langchain-text-splitters==1.1.3
 
 # --- Google Gemini ---
 google-genai==3.0.0
 
-# --- Vector stores / retrieval ---
-faiss-cpu==1.15.1
-chromadb==1.5.9
+# --- Retrieval ---
 numpy==2.5.4
 rank-bm25==0.2.2
 tiktoken==0.14.0
 
-# --- Document loaders ---
+# --- Document readers ---
 pypdf==7.0.0
 docx2txt==0.9
 python-docx==1.2.0
