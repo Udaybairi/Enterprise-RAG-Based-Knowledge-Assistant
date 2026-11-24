@@ -29,6 +29,7 @@ from app.vectorstore.base import VectorHit, VectorStore, Where, sanitize_metadat
 
 log = get_logger(__name__)
 TABLE = "rag_vectors"
+SCHEMA_LOCK_KEY = 0x52414702
 
 
 def _vec_literal(v: np.ndarray) -> str:
@@ -68,6 +69,9 @@ class PgVectorStore(VectorStore):
             if self.engine.dialect.name != "postgresql":
                 raise RuntimeError("VECTOR_STORE=pgvector requires a PostgreSQL DATABASE_URL")
             with self.engine.begin() as conn:
+                # Serialise DDL across instances: concurrent CREATE EXTENSION / CREATE TABLE IF NOT
+                # EXISTS can still collide in the catalog (UniqueViolation on pg_type).
+                conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SCHEMA_LOCK_KEY})
                 try:
                     conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
                 except Exception as exc:  # noqa: BLE001

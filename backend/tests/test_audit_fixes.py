@@ -176,3 +176,61 @@ def test_health_details_admin_only_and_counts_model_failures(client, admin, alic
     monkeypatch.setattr(health, "model_status", lambda: {"checked": True, "ok": False, "message": "model missing"})
     d = client.get("/api/health/details", headers=admin[0]).json()
     assert d["status"] == "degraded" and d["models"]["ok"] is False
+
+
+# --- concurrent schema creation (serverless cold starts in several regions) ---------------------
+PG_URL = __import__("os").environ.get("TEST_PGVECTOR_URL")
+
+
+@pytest.mark.skipif(not PG_URL, reason="set TEST_PGVECTOR_URL to run against PostgreSQL")
+def test_concurrent_schema_creation_does_not_race():
+    """Reproduces the production failure: two instances creating tables at once raised
+    UniqueViolation on pg_type and crashed one of them."""
+    import uuid
+
+    from sqlalchemy import create_engine, text
+
+    from app.database.session import create_schema
+    from app.vectorstore.pgvector_store import PgVectorStore
+
+    schema = f"race_{uuid.uuid4().hex[:8]}"
+    admin = create_engine(PG_URL)
+    with admin.begin() as conn:
+        conn.execute(text(f"CREATE SCHEMA {schema}"))
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    def engines(search_path: str):
+        return [create_engine(PG_URL, connect_args={"options": f"-csearch_path={search_path}",
+                                                    "prepare_threshold": None}) for _ in range(8)]
+
+    errors: list[BaseException] = []
+
+    def race(engs, fn):
+        barrier = threading.Barrier(len(engs))
+
+        def start(engine):
+            try:
+                barrier.wait()
+                fn(engine)
+            except BaseException as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        threads = [threading.Thread(target=start, args=(e,)) for e in engs]
+        [t.start() for t in threads]
+        [t.join() for t in threads]
+        for e in engs:
+            e.dispose()
+
+    # app tables: only the fresh schema on the path, so nothing pre-existing is found elsewhere
+    race(engines(schema), create_schema)
+    # vector table: needs public on the path for the `vector` type
+    race(engines(f"{schema},public"), lambda e: PgVectorStore(16, engine=e, table="race_vectors")._ensure_schema())
+    try:
+        assert errors == []
+        with admin.begin() as conn:
+            tables = {r[0] for r in conn.execute(text(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = :s"), {"s": schema})}
+        assert {"users", "app_flags", "documents", "race_vectors"} <= tables
+    finally:
+        with admin.begin() as conn:
+            conn.execute(text(f"DROP SCHEMA {schema} CASCADE"))
+        admin.dispose()

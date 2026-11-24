@@ -257,7 +257,7 @@ cd backend && VERCEL=1 FILE_STORAGE=database TEST_VECTOR_STORE=pgvector TEST_DAT
 cd frontend && npm run lint && npm run typecheck && npm run build
 ```
 
-The 99 backend tests run offline with the deterministic provider. They cover:
+The 100 backend tests run offline with the deterministic provider. They cover:
 
 - loaders for every format, preprocessing, and all four chunkers
 - all vector stores (Chroma, FAISS, pgvector, in-memory), MMR/RRF and the rerankers

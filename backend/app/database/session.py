@@ -7,7 +7,7 @@ from contextlib import contextmanager
 import threading
 from collections.abc import Callable
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import NullPool
@@ -69,6 +69,22 @@ def reset_engine() -> None:
     _engine, _SessionLocal, _initialized = None, None, False
 
 
+# Arbitrary constant identifying "schema DDL" for pg_advisory_xact_lock. Concurrent instances
+# (e.g. serverless cold starts in several regions) otherwise race on CREATE TABLE and fail with
+# UniqueViolation on pg_type even though every statement checks for existence first.
+SCHEMA_LOCK_KEY = 0x52414701
+
+
+def create_schema(engine: Engine) -> None:
+    """Create missing tables, serialised across processes on PostgreSQL."""
+    from app.database import models  # noqa: F401  (register models)
+
+    with engine.begin() as conn:
+        if conn.dialect.name == "postgresql":
+            conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SCHEMA_LOCK_KEY})
+        Base.metadata.create_all(bind=conn)
+
+
 def init_db() -> None:
     """Create tables and run init hooks exactly once per process.
 
@@ -81,9 +97,7 @@ def init_db() -> None:
     with _init_lock:
         if _initialized:
             return
-        from app.database import models  # noqa: F401  (register models)
-
-        Base.metadata.create_all(bind=_engine)
+        create_schema(_engine)
         _initialized = True
     for hook in init_hooks:
         hook()
