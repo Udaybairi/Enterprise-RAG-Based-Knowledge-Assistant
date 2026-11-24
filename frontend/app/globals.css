@@ -159,3 +159,8 @@ mark.hl { @apply rounded bg-yellow-200/80 px-0.5 text-slate-900 shadow-[0_0_0_2p
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Native dropdown lists: Chrome on Windows paints <option>s with the select's (translucent) background,
+   which falls back to white while the text stays light in dark mode. Give them solid colours. */
+select option, select optgroup { @apply bg-white text-slate-900; }
+.dark select option, .dark select optgroup { @apply bg-surface-2-dark text-slate-100; }
