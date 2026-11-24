@@ -191,6 +191,10 @@ export const api = {
   stats: () => request<DashboardStats>("/api/dashboard/stats"),
   auditLogs: (limit = 200) => request<AuditLog[]>(`/api/audit-logs${qs({ limit })}`),
   settings: () => request<AppSettings>("/api/settings"),
+  retention: () =>
+    request<{ audit_log_retention_days: number; conversation_retention_days: number; scheduled: boolean; last_run: string | null }>(
+      "/api/admin/retention"),
+  runRetention: () => request<Record<string, number>>("/api/admin/retention/run", { method: "POST" }),
   checkModels: () => request<Record<string, unknown>>("/api/settings/check-models", { method: "POST" }),
   health: () => request<Record<string, unknown>>("/api/health"),
 

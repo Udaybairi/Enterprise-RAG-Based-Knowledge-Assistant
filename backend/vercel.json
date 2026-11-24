@@ -6,5 +6,16 @@
       "excludeFiles": "{tests/**,data/**,**/__pycache__/**,*.md,Dockerfile,requirements-*.txt}"
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/retention",
+      "schedule": "17 3 * * *"
+    }
+  ]
 }

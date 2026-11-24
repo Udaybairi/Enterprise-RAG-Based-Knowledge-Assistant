@@ -3,7 +3,7 @@
 Each knowledge collection maps to its own *namespace* (a FAISS index file or a
 Chroma collection). Physical separation per collection is a deliberate
 security property: a query can only ever touch namespaces the caller has been
-authorised for, so cross-tenant leakage via a mis-built metadata filter is
+authorised for, so cross-user leakage via a mis-built metadata filter is
 impossible.
 """
 from __future__ import annotations

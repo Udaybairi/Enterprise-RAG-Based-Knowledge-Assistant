@@ -28,9 +28,22 @@ production certification.
 |---|---|
 | Containers run as non-root | `backend/Dockerfile` (`USER appuser`) and `frontend/Dockerfile` (`USER app`), verified with `id -un` in running containers. |
 | Tests actually run | 100 backend tests pass on SQLite + Chroma, SQLite + FAISS, PostgreSQL, and the Vercel configuration (pgvector + database file storage); CI runs all four. |
-| Tenant isolation tests | `test_tenant_isolation`, `test_organization_collection_shared_read_only`. |
+| Cross-user isolation tests | `test_cross_user_isolation`, `test_organization_collection_shared_read_only`. |
 | Deletion removes all associated data | `test_delete_document_cleans_vectors`, `test_delete_collection_removes_everything`, `test_database_file_storage_roundtrip`. |
 | Re-processing does not duplicate chunks | `test_reprocess_with_other_strategy` (vector count equals chunk count). |
+
+## Second review — done
+
+| Item | What changed | Evidence |
+|---|---|---|
+| Production model failures | Live key tested: the newest models returned 503/429, 2.5 models 404, the key is free tier (20 requests per model per day). Pinned `gemini-3.5-flash-lite` (0.6–0.8 s) with explicit fallbacks; quota-exhausted errors switch model instead of retrying; streaming errors on the first chunk are retried. | `tests/test_model_resolver.py` |
+| Reproducibility | Every answer stores provenance: prompt version (content hash), models actually used, embedding model, retrieval config, expansion mode, per-call latency and tokens, app version. Evaluation runs record commit (+dirty), dataset and corpus hashes. | `tests/test_provenance.py`, `tests/test_evaluation.py` |
+| Measured quality | Real-Gemini evaluation through the production path; threshold calibrated (0.45 → 0.58); latency and tokens measured. | [EVALUATION.md](EVALUATION.md) |
+| Hybrid retrieval in Postgres | pgvector + `tsvector` full-text search for all query variants and collections in one SQL statement; replaces per-instance in-memory BM25. | `tests/test_pg_hybrid.py` (asserts one search statement) |
+| Frontend tests | 13 Playwright tests (workflow, isolation, roles, CSP, theme, phone-width regressions) in CI. | `frontend/e2e/` |
+| iOS "overflow" | Actually Safari auto-zoom on 14 px inputs; fields are now 16 px on phones. | `e2e/03-mobile.spec.ts` |
+| CSP | Production Content-Security-Policy (`connect-src` limited to the API, no plugins, no framing); API responses send a deny-all policy. | `e2e/02-security-and-roles.spec.ts` |
+| Wording and governance | "Tenant" claims replaced by cross-user isolation within one organisation; data-governance document; retention job (daily cron + admin endpoint); upload notice about data sent to Gemini. | [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md), `tests/test_retention.py` |
 
 ## Planned (not done yet)
 
@@ -49,10 +62,10 @@ decision rather than a quick patch.
 5. **Object storage** for original files (instead of local disk or Postgres `BYTEA`).
 6. **Claim-level citation verification**: split the answer into claims and check each cited passage for
    entailment with the utility model, flagging unsupported numbers and dates.
-7. **Evaluation**: grow the gold set from 14 to several hundred human-reviewed cases (multi-hop, tables,
-   conflicting and temporal evidence, adversarial documents, access control); add nDCG@k and citation
-   precision/recall; run a fixed benchmark in CI with regression thresholds. The cases must be written and
-   reviewed by people, and real-model runs need an API budget, so this cannot be generated automatically.
+7. **Evaluation at scale**: the set is now 41 author-written questions over a 6-document corpus (see
+   [EVALUATION.md](EVALUATION.md)). Next: a corpus of thousands of chunks so retrieval strategies can
+   be told apart, independently written questions, an LLM-judge or human review for faithfulness, and a
+   fixed benchmark in CI with regression thresholds (needs a paid API budget).
 8. Account lifecycle: password reset, email verification, optional MFA (mandatory for admins).
 9. Observability: OpenTelemetry traces linking upload → ingestion → retrieval, token and cost metrics,
    error tracking.

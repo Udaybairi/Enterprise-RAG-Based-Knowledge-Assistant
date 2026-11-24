@@ -107,6 +107,12 @@ export function UploadDropzone({
         {busy ? <Spinner className="h-8 w-8 text-brand-600" /> : <UploadCloud className="h-8 w-8 text-brand-600" />}
         <p className="mt-3 text-sm font-medium">{busy ? (progress ?? "Uploading…") : "Drop files here or click to browse"}</p>
         <p className="mt-1 text-xs text-slate-500">PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown · up to {maxMb} MB each</p>
+        <p className="mt-2 max-w-md text-[11px] text-slate-500">
+          Extracted text is sent to Google Gemini to index and answer questions. Don&apos;t upload confidential or
+          personal data unless your deployment uses a paid Gemini key.{" "}
+          <a className="underline" href="https://github.com/Udaybairi/Enterprise-RAG-Based-Knowledge-Assistant/blob/HEAD/docs/DATA_GOVERNANCE.md"
+            target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>Data governance</a>
+        </p>
         <input ref={input} type="file" multiple accept={ACCEPT} className="hidden"
           onChange={(e) => e.target.files && upload(e.target.files)} />
       </div>

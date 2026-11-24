@@ -51,7 +51,7 @@ def audit(db: Session, request: Request, user: User | None, action: str, resourc
 def readable_collection(db: Session, user: User, collection_id: str) -> Collection:
     c = CollectionRepository(db).get(collection_id)
     if c is None or not CollectionRepository.can_read(user, c):
-        # 404 (not 403) so that IDs of other tenants' collections are not disclosed
+        # 404 (not 403) so that IDs of other users' collections are not disclosed
         raise HTTPException(status_code=404, detail="Collection not found")
     return c
 

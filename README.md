@@ -80,7 +80,8 @@ numbers show the pipeline working and the method for measuring it, not productio
 - **Security**:
   - JWT authentication with bcrypt-hashed passwords
   - admin and user roles; private or organisation-wide collections
-  - document-level access checks and tenant isolation (tested)
+  - document-level access checks and cross-user isolation (tested). Scope: one organisation with
+    multiple users, not a multi-tenant SaaS (there is no organisation/tenant entity)
   - rate limiting, audit logs and secret redaction
   - uploaded documents are treated as untrusted data in prompts
 - **Evaluation**: a gold dataset of question, answer and source triples, plus unanswerable questions.
@@ -93,6 +94,9 @@ https://enterprise-rag-api-pi.vercel.app (`/api/health`, `/api/docs`).
 
 **Deploying to Vercel?** Follow **[docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)** (frontend + serverless backend
 + Neon Postgres with pgvector).
+
+What is stored, what is sent to Google Gemini, retention and deletion:
+**[docs/DATA_GOVERNANCE.md](docs/DATA_GOVERNANCE.md)**.
 
 An external engineering audit and the response to each finding (fixed, planned, or disputed) are in
 **[docs/AUDIT_RESPONSE.md](docs/AUDIT_RESPONSE.md)**.
@@ -202,6 +206,8 @@ important ones:
 | `SIMILARITY_THRESHOLD` | `0.45` | Minimum cosine similarity. Tune it on the Evaluation page. |
 | `RERANKER` | `lexical` | `none`, `lexical`, `llm` |
 | `DATABASE_URL` | SQLite file | PostgreSQL recommended in production |
+| `AUDIT_LOG_RETENTION_DAYS` / `CONVERSATION_RETENTION_DAYS` | `365` / `180` | Daily retention job (0 = keep forever) |
+| `CRON_SECRET` | (none) | Authenticates the daily Vercel cron that runs retention |
 
 **Model availability.** Google renames and retires Gemini models regularly. I could not check Google's live
 model list while building this (the docs site was not reachable from the build environment), so the defaults
@@ -275,12 +281,14 @@ cd backend && VERCEL=1 FILE_STORAGE=database TEST_VECTOR_STORE=pgvector TEST_DAT
 cd frontend && npm run lint && npm run typecheck && npm run build
 ```
 
-The 100 backend tests run offline with the deterministic provider. They cover:
+The 120 backend tests run offline with the deterministic provider (114 without PostgreSQL; 6 more
+exercise pgvector + full-text search and need a pgvector database). 13 Playwright browser tests run
+against the real stack (`cd frontend && npm run build && npm run test:e2e`). The backend tests cover:
 
 - loaders for every format, preprocessing, and all four chunkers
 - all vector stores (Chroma, FAISS, pgvector, in-memory), MMR/RRF and the rerankers
 - citation validation, guardrails, embedding cache, retries and Gemini request batching (mocked client)
-- the full HTTP API: auth, RBAC, **tenant isolation**, ingestion, search with every strategy, streaming chat,
+- the full HTTP API: auth, RBAC, **cross-user isolation**, ingestion, search with every strategy, streaming chat,
   follow-ups, regeneration, refusals, re-processing without stale vectors, deletion cleanup, audit logs
 - the evaluation harness
 

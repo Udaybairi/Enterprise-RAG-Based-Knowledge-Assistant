@@ -83,6 +83,13 @@ class Settings(BaseSettings):
         default_factory=lambda: [".pdf", ".docx", ".txt", ".csv", ".xlsx", ".pptx", ".md", ".markdown"]
     )
 
+    # ---- data retention (docs/DATA_GOVERNANCE.md) --------------------------
+    # Days to keep audit logs and conversations; 0 = keep forever. Enforced by a daily job
+    # (Vercel cron -> /api/cron/retention with CRON_SECRET) or POST /api/admin/retention/run.
+    audit_log_retention_days: int = 365
+    conversation_retention_days: int = 180
+    cron_secret: str | None = None
+
     # ---- LLM provider ------------------------------------------------------
     # "gemini" for real usage; "fake" is a deterministic offline provider used
     # by the test-suite and for running the stack without an API key.

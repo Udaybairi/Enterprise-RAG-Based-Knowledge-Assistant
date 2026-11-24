@@ -33,6 +33,16 @@ export default function SettingsPage() {
   const isAdmin = user?.role === "admin";
   const users = useAsync(() => (isAdmin ? api.users() : Promise.resolve([])), [isAdmin]);
   const audit = useAsync(() => (isAdmin ? api.auditLogs(100) : Promise.resolve([])), [isAdmin]);
+  const retention = useAsync(() => (isAdmin ? api.retention() : Promise.resolve(null)), [isAdmin]);
+  const runRetention = async () => {
+    try {
+      const r = await api.runRetention();
+      setToast(`Retention run: ${r.audit_logs_deleted} audit logs and ${r.conversations_deleted} conversations deleted`);
+      void retention.reload(true);
+    } catch (e) {
+      setToast((e as Error).message);
+    }
+  };
   const [checking, setChecking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const s = settings.data;
@@ -155,6 +165,17 @@ export default function SettingsPage() {
                   </tbody>
                 </table>
               </div>
+            )}
+          </Section>
+          <Section title="Data retention" description="Expired records are deleted daily (see docs/DATA_GOVERNANCE.md).">
+            {retention.data && (
+              <>
+                <Row k="Audit logs kept for" v={retention.data.audit_log_retention_days ? `${retention.data.audit_log_retention_days} days` : "forever"} />
+                <Row k="Conversations kept for" v={retention.data.conversation_retention_days ? `${retention.data.conversation_retention_days} days after last activity` : "forever"} />
+                <Row k="Daily schedule" v={retention.data.scheduled ? "enabled" : "not configured (run manually)"} />
+                <Row k="Last run" v={formatDate(retention.data.last_run)} />
+                <button className="btn-secondary mt-3 px-2.5 py-1.5 text-xs" onClick={runRetention}>Run retention now</button>
+              </>
             )}
           </Section>
           <Section title="Audit log" description="Security-relevant actions across the platform (latest 100).">

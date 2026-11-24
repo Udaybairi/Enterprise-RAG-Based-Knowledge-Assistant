@@ -11,7 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api.routes import auth, chat, collections, dashboard, documents, evaluation, health, search
+from app.api.routes import admin, auth, chat, collections, dashboard, documents, evaluation, health, search
 from app.config import get_settings
 from app.core.exceptions import AppError
 from app.core.logging import get_logger, request_id_var, setup_logging
@@ -122,7 +122,7 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
     for r in (health.router, auth.router, auth.users_router, collections.router, documents.router, chat.router,
-              search.router, dashboard.router, evaluation.router):
+              search.router, dashboard.router, evaluation.router, admin.router):
         app.include_router(r)
     return app
 

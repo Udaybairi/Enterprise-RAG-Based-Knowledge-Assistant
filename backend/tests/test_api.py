@@ -1,4 +1,4 @@
-"""End-to-end API tests: auth, RBAC, tenant isolation, ingestion, retrieval, chat, citations, cleanup."""
+"""End-to-end API tests: auth, RBAC, cross-user isolation, ingestion, retrieval, chat, citations, cleanup."""
 from __future__ import annotations
 
 import json
@@ -191,7 +191,7 @@ def test_streaming_chat(client, alice, alice_kb):
     assert "14 characters" in streamed
 
 
-def test_tenant_isolation(client, alice, bob, alice_kb):
+def test_cross_user_isolation(client, alice, bob, alice_kb):
     bob_h, _ = bob
     col, docs = alice_kb
     # bob cannot see alice's private collection or documents
