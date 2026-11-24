@@ -83,6 +83,13 @@ def create_schema(engine: Engine) -> None:
         if conn.dialect.name == "postgresql":
             conn.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": SCHEMA_LOCK_KEY})
         Base.metadata.create_all(bind=conn)
+        if conn.dialect.name == "postgresql":
+            # Full-text search for hybrid retrieval (app/retrieval/pg_hybrid.py). Idempotent DDL until
+            # Alembic migrations are introduced.
+            conn.execute(text(
+                "ALTER TABLE chunks ADD COLUMN IF NOT EXISTS search_tsv tsvector GENERATED ALWAYS AS "
+                "(to_tsvector('english', coalesce(section, '') || ' ' || text)) STORED"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_chunks_search_tsv ON chunks USING GIN (search_tsv)"))
 
 
 def init_db() -> None:

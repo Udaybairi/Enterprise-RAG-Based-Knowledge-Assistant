@@ -76,6 +76,15 @@ class Retriever:
         self.llm = llm
         self.keyword_search = keyword_search or keyword_index.search
         self.hydrate = hydrate or self._hydrate
+        # On pgvector deployments, vector + full-text search + hydration run as one SQL statement
+        # (unless an alternative corpus was injected, e.g. by the isolated evaluation harness).
+        self.pg = None
+        from app.vectorstore.pgvector_store import PgVectorStore
+
+        if isinstance(self.store, PgVectorStore) and keyword_search is None and hydrate is None:
+            from app.retrieval.pg_hybrid import PgHybridSearch
+
+            self.pg = PgHybridSearch(self.store.engine, self.store.table)
 
     # ------------------------------------------------------------------ public
     def retrieve(self, queries: list[str], collection_ids: list[str], cfg: RetrievalConfig,
@@ -85,8 +94,16 @@ class Retriever:
             return []
         qvecs = self.embedder.embed_queries(queries)
         per_query: list[dict[str, RetrievedChunk]] = []
-        for q, qv in zip(queries, qvecs):
-            per_query.append(self._retrieve_one(q, qv, collection_ids, cfg))
+        if self.pg is not None:
+            self.store._ensure_schema()
+            raw = self.pg.search(queries, qvecs, collection_ids, k=cfg.fetch_k,
+                                 use_vector=cfg.strategy in ("semantic", "hybrid", "mmr"),
+                                 use_keyword=cfg.strategy in ("hybrid", "keyword"),
+                                 where=cfg.where, include_vectors=cfg.strategy == "mmr")
+            per_query = [self._score(found, qv, cfg) for found, qv in zip(raw, qvecs)]
+        else:
+            for q, qv in zip(queries, qvecs):
+                per_query.append(self._retrieve_one(q, qv, collection_ids, cfg))
 
         # Fuse across queries (multi-query retrieval) with RRF; the original query weighs most.
         rankings = []
@@ -103,7 +120,11 @@ class Retriever:
             c.score = fused[cid]
         candidates = sorted(merged.values(), key=lambda c: -c.score)[: cfg.fetch_k]
 
-        candidates = self.hydrate(candidates, collection_ids)
+        if self.pg is not None:  # already hydrated by the SQL query; keep the authorisation check
+            allowed = set(collection_ids)
+            candidates = [c for c in candidates if c.collection_id in allowed]
+        else:
+            candidates = self.hydrate(candidates, collection_ids)
         candidates, removed = dedupe_near(candidates, key=lambda c: c.text, threshold=0.8)
         if removed:
             log.debug("context dedup removed %d overlapping chunks", removed)
@@ -132,11 +153,9 @@ class Retriever:
                     chunk_id=h.id, document_id=h.metadata.get("document_id", ""), collection_id=ns, text="",
                     vector_score=h.score, score=h.score, vector=h.vector,
                 )
-            kw_max = kw_hits[0][1] if kw_hits else 1.0
             for cid, s in kw_hits:
                 c = chunks.get(cid) or RetrievedChunk(chunk_id=cid, document_id="", collection_id=ns, text="")
                 c.keyword_score = s
-                c.meta["keyword_norm"] = s / kw_max if kw_max else 0.0
                 chunks[cid] = c
 
             # keyword-only hits get a real cosine score so the threshold applies uniformly
@@ -145,27 +164,36 @@ class Retriever:
                 vecs = self.store.get_vectors(ns, missing)
                 for cid, v in vecs.items():
                     chunks[cid].vector_score = float(np.dot(v, qv) / max(np.linalg.norm(v) * np.linalg.norm(qv), 1e-12))
-
-            chunks = {cid: c for cid, c in chunks.items() if self._passes_threshold(c, cfg)}
-
-            if cfg.strategy == "mmr":
-                items = [c for c in chunks.values() if c.vector is not None]
-                order = mmr_select(qv, [c.vector for c in items], cfg.top_k * 2, cfg.mmr_lambda)
-                for rank, idx in enumerate(order):
-                    items[idx].score = 1.0 / (rank + 1)
-                chunks = {items[i].chunk_id: items[i] for i in order}
-            elif cfg.strategy == "hybrid":
-                v_rank = [c.chunk_id for c in sorted(chunks.values(), key=lambda c: -(c.vector_score or -1))]
-                k_rank = [c.chunk_id for c in sorted((c for c in chunks.values() if c.keyword_score),
-                                                     key=lambda c: -(c.keyword_score or 0))]
-                fused = weighted_rrf([(v_rank, cfg.hybrid_alpha), (k_rank, 1 - cfg.hybrid_alpha)])
-                for cid, c in chunks.items():
-                    c.score = fused.get(cid, 0.0)
-            elif cfg.strategy == "keyword":
-                for c in chunks.values():
-                    c.score = c.keyword_score or 0.0
             results.update(chunks)
-        return results
+        return self._score(results, qv, cfg)
+
+    def _score(self, chunks: dict[str, RetrievedChunk], qv: np.ndarray, cfg: RetrievalConfig) -> dict[str, RetrievedChunk]:
+        """Apply the similarity threshold and the strategy's scoring (shared by both search paths)."""
+        kw_max = max((c.keyword_score or 0.0 for c in chunks.values()), default=0.0)
+        for c in chunks.values():
+            c.meta["keyword_norm"] = (c.keyword_score or 0.0) / kw_max if kw_max else 0.0
+        chunks = {cid: c for cid, c in chunks.items() if self._passes_threshold(c, cfg)}
+
+        if cfg.strategy == "mmr":
+            items = [c for c in chunks.values() if c.vector is not None]
+            order = mmr_select(qv, [c.vector for c in items], cfg.top_k * 2, cfg.mmr_lambda)
+            for rank, idx in enumerate(order):
+                items[idx].score = 1.0 / (rank + 1)
+            return {items[i].chunk_id: items[i] for i in order}
+        if cfg.strategy == "hybrid":
+            v_rank = [c.chunk_id for c in sorted(chunks.values(), key=lambda c: -(c.vector_score or -1))]
+            k_rank = [c.chunk_id for c in sorted((c for c in chunks.values() if c.keyword_score),
+                                                 key=lambda c: -(c.keyword_score or 0))]
+            fused = weighted_rrf([(v_rank, cfg.hybrid_alpha), (k_rank, 1 - cfg.hybrid_alpha)])
+            for cid, c in chunks.items():
+                c.score = fused.get(cid, 0.0)
+        elif cfg.strategy == "keyword":
+            for c in chunks.values():
+                c.score = c.keyword_score or 0.0
+        else:  # semantic
+            for c in chunks.values():
+                c.score = c.vector_score or 0.0
+        return chunks
 
     @staticmethod
     def _passes_threshold(c: RetrievedChunk, cfg: RetrievalConfig) -> bool:
