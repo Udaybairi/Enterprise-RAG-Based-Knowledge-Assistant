@@ -28,3 +28,7 @@ frontend/next-env.d.ts
 .idea/
 .vscode/
 .vercel
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
