@@ -50,6 +50,7 @@ class ChatResponse(BaseModel):
     rewritten_query: str | None = None
     latency_ms: float
     retrieval: dict[str, Any] = {}
+    provenance: dict[str, Any] = {}
 
 
 class MessageOut(ORMModel):

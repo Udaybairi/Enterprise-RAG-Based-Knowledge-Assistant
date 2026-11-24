@@ -79,7 +79,7 @@ class Retriever:
 
     # ------------------------------------------------------------------ public
     def retrieve(self, queries: list[str], collection_ids: list[str], cfg: RetrievalConfig,
-                 rerank_query: str | None = None) -> list[RetrievedChunk]:
+                 rerank_query: str | None = None, trace: list[dict] | None = None) -> list[RetrievedChunk]:
         queries = [q for q in dict.fromkeys(q.strip() for q in queries) if q]
         if not queries or not collection_ids:
             return []
@@ -108,7 +108,7 @@ class Retriever:
         if removed:
             log.debug("context dedup removed %d overlapping chunks", removed)
 
-        reranker = Reranker(cfg.reranker, llm=self.llm or (get_llm() if cfg.reranker == "llm" else None))
+        reranker = Reranker(cfg.reranker, llm=self.llm or (get_llm() if cfg.reranker == "llm" else None), trace=trace)
         ranked = reranker.rerank(rerank_query or queries[0], candidates, cfg.top_k)
         return ranked
 

@@ -75,7 +75,8 @@ def llm(monkeypatch):
 
     resolver.reset()
     g = GeminiLLM(Settings(google_api_key="k", gemini_chat_model="gemini-flash-latest",
-                           gemini_utility_model="gemini-flash-lite-latest"))
+                           gemini_utility_model="gemini-flash-lite-latest", gemini_fallback_models=[],
+                           gemini_thinking_level=None))
     g.client = SimpleNamespace(models=_FakeModels(AVAILABLE))
     yield g
     resolver.reset()
@@ -124,3 +125,64 @@ def test_overloaded_everywhere_gives_readable_error(llm):
     with pytest.raises(ProviderError) as e:
         "".join(llm.stream("q"))
     assert "temporarily overloaded" in e.value.message
+
+
+def _quota_exhausted():
+    return errors.APIError(429, {"error": {"code": 429, "status": "RESOURCE_EXHAUSTED", "message":
+        "You exceeded your current quota. Quota exceeded for metric: "
+        "generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20"}})
+
+
+def test_explicit_fallbacks_are_tried_first_and_quota_is_not_retried(monkeypatch):
+    """Seen in production: the newest models returned 503/429 for a free-tier key while older ones worked."""
+    from app.llm import retry
+    from app.llm.gemini_llm import GeminiLLM
+
+    sleeps: list[float] = []
+    monkeypatch.setattr(retry.time, "sleep", lambda s: sleeps.append(s))
+    resolver.reset()
+    g = GeminiLLM(Settings(google_api_key="k", gemini_chat_model="gemini-3.1-flash",
+                           gemini_fallback_models=["gemini-2.5-flash"], gemini_thinking_level=None))
+    fake = _FakeModels(AVAILABLE)
+    orig = fake.generate_content
+
+    def generate_content(model, contents, config):
+        if model == "gemini-3.1-flash":
+            fake.calls.append(model)
+            raise _quota_exhausted()
+        return orig(model, contents, config)
+
+    fake.generate_content = generate_content
+    g.client = SimpleNamespace(models=fake)
+    trace: list[dict] = []
+    assert g.generate("q", trace=trace) == "answer from gemini-2.5-flash"
+    assert fake.calls.count("gemini-3.1-flash") == 1  # daily quota: no pointless retries
+    assert sleeps == []
+    assert trace[-1]["model"] == "gemini-2.5-flash" and trace[-1]["purpose"] == "generate"
+    resolver.reset()
+
+
+def test_thinking_config_is_dropped_for_models_that_reject_it(monkeypatch):
+    from app.llm.gemini_llm import GeminiLLM
+
+    resolver.reset()
+    g = GeminiLLM(Settings(google_api_key="k", gemini_chat_model="gemini-3.1-flash", gemini_fallback_models=[],
+                           gemini_thinking_level="low"))
+    fake = _FakeModels(AVAILABLE)
+    seen = []
+    orig = fake.generate_content
+
+    def generate_content(model, contents, config):
+        seen.append(config.thinking_config)
+        if config.thinking_config is not None:
+            raise errors.APIError(400, {"error": {"code": 400, "status": "INVALID_ARGUMENT",
+                                                  "message": "thinking_level is not supported by this model"}})
+        return orig(model, contents, config)
+
+    fake.generate_content = generate_content
+    g.client = SimpleNamespace(models=fake)
+    assert g.generate("q") == "answer from gemini-3.1-flash"
+    assert seen[0] is not None and seen[-1] is None
+    g.generate("again")
+    assert seen[-1] is None  # remembered: not sent again
+    resolver.reset()

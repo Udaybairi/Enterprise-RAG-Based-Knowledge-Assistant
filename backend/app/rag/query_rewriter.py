@@ -33,14 +33,27 @@ class QueryRewriter:
     def __init__(self, llm: LLMClient):
         self.llm = llm
 
+    def expand(self, question: str, n: int, trace: list[dict] | None = None) -> list[str]:
+        """Alternative phrasings of the question (multi-query retrieval)."""
+        if n <= 0:
+            return []
+        try:
+            data = self.llm.generate_json(expand_prompt(neutralize_markup(question), n), trace=trace,
+                                          purpose="query_expansion")
+            return [q.strip() for q in data.get("queries", [])[:n] if isinstance(q, str) and q.strip() and len(q) < 500]
+        except Exception as exc:  # noqa: BLE001
+            log.warning("query expansion failed: %s", exc)
+            return []
+
     def plan(self, question: str, history: list[tuple[str, str]], *, rewrite: bool = True,
-             expand: bool = True, n_expansions: int = 3) -> QueryPlan:
+             expand: bool = True, n_expansions: int = 3, trace: list[dict] | None = None) -> QueryPlan:
         question = validate_query(question)
         standalone = question
         rewritten = False
         if rewrite and history:
             try:
-                data = self.llm.generate_json(rewrite_prompt(neutralize_markup(question), format_history(history)))
+                data = self.llm.generate_json(rewrite_prompt(neutralize_markup(question), format_history(history)),
+                                              trace=trace, purpose="query_rewrite")
                 candidate = str(data.get("standalone_question", "")).strip()
                 if candidate and len(candidate) < 1000:
                     rewritten = candidate.lower() != question.lower()
@@ -50,13 +63,7 @@ class QueryRewriter:
         queries = [standalone]
         if rewritten:
             queries.append(question)
-        if expand and n_expansions > 0:
-            try:
-                data = self.llm.generate_json(expand_prompt(neutralize_markup(standalone), n_expansions))
-                for q in data.get("queries", [])[:n_expansions]:
-                    if isinstance(q, str) and q.strip() and len(q) < 500:
-                        queries.append(q.strip())
-            except Exception as exc:  # noqa: BLE001
-                log.warning("query expansion failed: %s", exc)
+        if expand:
+            queries.extend(self.expand(standalone, n_expansions, trace))
         queries = list(dict.fromkeys(queries))
         return QueryPlan(original=question, standalone=standalone, queries=queries, rewritten=rewritten)

@@ -12,7 +12,7 @@ import re
 from collections.abc import Iterator
 
 from app.llm.base import LLMClient
-from app.utils.text import content_terms, split_sentences
+from app.utils.text import content_terms, count_tokens, split_sentences
 
 _SOURCE_RE = re.compile(r'<source id="(\d+)"[^>]*>(.*?)</source>', re.S)
 _QUESTION_RE = re.compile(r"<question>(.*?)</question>", re.S)
@@ -23,7 +23,14 @@ class FakeLLM(LLMClient):
     model = "fake-extractive-llm"
 
     def generate(self, prompt, *, system=None, temperature=None, max_tokens=None, json_mode=False,
-                 utility=False) -> str:
+                 utility=False, trace=None, purpose="generate") -> str:
+        out = self._generate(prompt)
+        if trace is not None:
+            trace.append({"purpose": purpose, "model": self.model, "ms": 0.0,
+                          "input_tokens": count_tokens(prompt), "output_tokens": count_tokens(out)})
+        return out
+
+    def _generate(self, prompt: str) -> str:
         task = re.search(r"<task>(\w+)</task>", prompt)
         task_name = task.group(1) if task else "answer"
         if task_name == "rewrite":
@@ -89,7 +96,7 @@ class FakeLLM(LLMClient):
             return "I could not find enough information in the uploaded documents to answer this question."
         return " ".join(picked)
 
-    def stream(self, prompt, *, system=None, temperature=None, max_tokens=None) -> Iterator[str]:
-        text = self.generate(prompt, system=system)
+    def stream(self, prompt, *, system=None, temperature=None, max_tokens=None, trace=None) -> Iterator[str]:
+        text = self.generate(prompt, system=system, trace=trace, purpose="answer")
         for tok in re.findall(r"\S+\s*", text):
             yield tok

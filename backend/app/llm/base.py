@@ -14,16 +14,23 @@ class LLMClient(ABC):
 
     @abstractmethod
     def generate(self, prompt: str, *, system: str | None = None, temperature: float | None = None,
-                 max_tokens: int | None = None, json_mode: bool = False, utility: bool = False) -> str:
-        """Return a full completion. ``utility`` selects the cheaper helper model."""
+                 max_tokens: int | None = None, json_mode: bool = False, utility: bool = False,
+                 trace: list[dict] | None = None, purpose: str = "generate") -> str:
+        """Return a full completion. ``utility`` selects the cheaper helper model.
+
+        If ``trace`` is given, one record per model call is appended: purpose, model actually used,
+        latency and token counts. This is what makes answers reproducible and costs measurable.
+        """
 
     @abstractmethod
     def stream(self, prompt: str, *, system: str | None = None, temperature: float | None = None,
-               max_tokens: int | None = None) -> Iterator[str]:
-        """Yield completion text deltas."""
+               max_tokens: int | None = None, trace: list[dict] | None = None) -> Iterator[str]:
+        """Yield completion text deltas (``trace`` as for :meth:`generate`)."""
 
-    def generate_json(self, prompt: str, *, system: str | None = None, utility: bool = True) -> Any:
-        raw = self.generate(prompt, system=system, json_mode=True, utility=utility, temperature=0.0)
+    def generate_json(self, prompt: str, *, system: str | None = None, utility: bool = True,
+                      trace: list[dict] | None = None, purpose: str = "json") -> Any:
+        raw = self.generate(prompt, system=system, json_mode=True, utility=utility, temperature=0.0,
+                            trace=trace, purpose=purpose)
         return parse_json_loose(raw)
 
 

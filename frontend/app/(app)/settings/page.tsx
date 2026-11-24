@@ -136,7 +136,7 @@ export default function SettingsPage() {
                       <tr key={u.id}>
                         <td className="py-2"><div className="font-medium">{u.full_name || "—"}</div><div className="text-xs text-slate-500">{u.email}</div></td>
                         <td>
-                          <select className="input w-auto py-1 text-xs" value={u.role} disabled={u.id === user?.id}
+                          <select className="input w-auto py-1 sm:text-xs" value={u.role} disabled={u.id === user?.id}
                             onChange={(e) => updateUser(() => api.setRole(u.id, e.target.value))} aria-label={`Role for ${u.email}`}>
                             <option value="user">user</option><option value="admin">admin</option>
                           </select>

@@ -40,7 +40,8 @@ def _persist_answer(conversation_id: str, final: dict) -> str:
     with session_scope() as db:
         conv = db.get(Conversation, conversation_id)
         meta = {"grounded": final["grounded"], "rewritten_query": final.get("rewritten_query"),
-                "latency_ms": final["latency_ms"], "retrieval": final.get("retrieval", {})}
+                "latency_ms": final["latency_ms"], "retrieval": final.get("retrieval", {}),
+                "provenance": final.get("provenance", {})}
         msg = ConversationRepository(db).add_message(conv, "assistant", final["answer"], final["citations"], meta)
         return msg.id
 
@@ -89,7 +90,7 @@ def chat(body: ChatRequest, request: Request, user: User = Depends(get_current_u
         result = chain.run(question, collection_ids, **kwargs)
         final = {"answer": result.answer, "citations": result.citations, "grounded": result.grounded,
                  "rewritten_query": result.rewritten_query, "latency_ms": result.latency_ms,
-                 "retrieval": result.retrieval}
+                 "retrieval": result.retrieval, "provenance": result.provenance}
         message_id = _persist_answer(conv_id, final)
         return ChatResponse(conversation_id=conv_id, message_id=message_id, **final)
 

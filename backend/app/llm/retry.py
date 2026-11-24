@@ -23,10 +23,17 @@ def _status_of(exc: Exception) -> int | None:
         return None
 
 
+def is_quota_exhausted(exc: Exception) -> bool:
+    """A daily/plan quota is used up: waiting seconds will not help (switch model instead)."""
+    msg = str(exc).lower()
+    return _status_of(exc) == 429 and ("exceeded your current quota" in msg or "free_tier" in msg
+                                       or "per day" in msg or "perday" in msg)
+
+
 def is_retryable(exc: Exception) -> bool:
     status = _status_of(exc)
     if status is not None:
-        return status in RETRYABLE_STATUS
+        return status in RETRYABLE_STATUS and not is_quota_exhausted(exc)
     # network-level failures (timeouts, resets) are worth retrying
     name = type(exc).__name__.lower()
     return any(k in name for k in ("timeout", "connect", "network", "remoteprotocol", "readerror"))

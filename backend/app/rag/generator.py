@@ -15,8 +15,9 @@ class AnswerGenerator:
     def _prompt(self, question: str, context: str, history: str) -> str:
         return answer_prompt(neutralize_markup(question), context, history)
 
-    def generate(self, question: str, context: str, history: str = "") -> str:
-        return self.llm.generate(self._prompt(question, context, history), system=SYSTEM_PROMPT)
+    def generate(self, question: str, context: str, history: str = "", trace: list[dict] | None = None) -> str:
+        return self.llm.generate(self._prompt(question, context, history), system=SYSTEM_PROMPT, trace=trace,
+                                 purpose="answer")
 
-    def stream(self, question: str, context: str, history: str = "") -> Iterator[str]:
-        yield from self.llm.stream(self._prompt(question, context, history), system=SYSTEM_PROMPT)
+    def stream(self, question: str, context: str, history: str = "", trace: list[dict] | None = None) -> Iterator[str]:
+        yield from self.llm.stream(self._prompt(question, context, history), system=SYSTEM_PROMPT, trace=trace)

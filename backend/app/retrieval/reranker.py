@@ -35,7 +35,9 @@ def lexical_score(query: str, c: RetrievedChunk) -> float:
 
 
 class Reranker:
-    def __init__(self, kind: str = "lexical", llm: LLMClient | None = None, min_score: float | None = None):
+    def __init__(self, kind: str = "lexical", llm: LLMClient | None = None, min_score: float | None = None,
+                 trace: list[dict] | None = None):
+        self.trace = trace
         self.kind = kind
         self.llm = llm
         self.min_score = min_score
@@ -72,7 +74,7 @@ class Reranker:
             f"<question>{neutralize_markup(query)}</question>\n{passages}\n"
             'Respond with JSON: {"scores": [{"id": <int>, "score": <0-10>}]}'
         )
-        data = self.llm.generate_json(prompt, utility=True)
+        data = self.llm.generate_json(prompt, utility=True, trace=self.trace, purpose="rerank")
         scores = {int(s["id"]): float(s["score"]) for s in data.get("scores", []) if "id" in s}
         for i, c in enumerate(chunks):
             llm_s = scores.get(i, 0.0) / 10.0

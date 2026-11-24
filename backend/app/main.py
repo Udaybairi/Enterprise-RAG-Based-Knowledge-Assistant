@@ -99,6 +99,10 @@ def create_app() -> FastAPI:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
+        # The API serves JSON and files, never pages: forbid everything for any response a browser
+        # might render directly. The interactive docs page needs its CDN assets, so it is exempt.
+        if not request.url.path.startswith(("/api/docs", "/api/openapi.json")):
+            response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         if request.url.path != "/api/health":
             log.info("%s %s -> %s (%.0f ms)", request.method, request.url.path, response.status_code, ms)
         return response

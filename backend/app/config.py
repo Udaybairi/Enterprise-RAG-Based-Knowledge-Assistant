@@ -88,9 +88,18 @@ class Settings(BaseSettings):
     # by the test-suite and for running the stack without an API key.
     llm_provider: Literal["gemini", "fake"] = "gemini"
     google_api_key: str | None = None
-    gemini_chat_model: str = "gemini-flash-latest"
+    # Defaults verified against a live key on 2026-11-24 (see docs/EVALUATION.md). Model availability
+    # differs per key and tier and changes over time; check with Settings -> Verify models.
+    gemini_chat_model: str = "gemini-3.5-flash-lite"
     # Small/fast model used for query rewriting, expansion and LLM reranking.
-    gemini_utility_model: str = "gemini-flash-lite-latest"
+    gemini_utility_model: str = "gemini-3.5-flash-lite"
+    # Tried in order when the primary model is unavailable, overloaded or out of quota (each model
+    # has its own quota). Auto-discovered models are only used after these.
+    gemini_fallback_models: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["gemini-3.6-flash", "gemini-3.5-flash"])
+    # "low" keeps Gemini 3 "thinking" models responsive (default thinking took 6-30 s per call);
+    # empty = model default. Removed automatically for models that reject the setting.
+    gemini_thinking_level: str | None = "low"
     gemini_embedding_model: str = "gemini-embedding-001"
     embedding_dimension: int = 768
     generation_temperature: float = 0.1
@@ -122,10 +131,13 @@ class Settings(BaseSettings):
     hybrid_alpha: float = 0.6  # weight of the vector ranking in fusion
     reranker: Literal["none", "lexical", "llm"] = "lexical"
     multi_query_count: int = 3
+    # always: expand every question; adaptive: only when the first retrieval is weak (saves a model
+    # call per question, which matters on free-tier quotas); off: never.
+    query_expansion: Literal["always", "adaptive", "off"] = "adaptive"
     enable_query_rewriting: bool = True
     max_context_tokens: int = 12000
 
-    @field_validator("cors_origins", "allowed_extensions", mode="before")
+    @field_validator("cors_origins", "allowed_extensions", "gemini_fallback_models", mode="before")
     @classmethod
     def _split_csv(cls, v):  # allow comma separated env values
         if isinstance(v, str):

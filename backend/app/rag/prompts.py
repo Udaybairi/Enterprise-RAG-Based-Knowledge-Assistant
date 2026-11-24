@@ -54,3 +54,16 @@ def expand_prompt(question: str, n: int) -> str:
         f"<question>{question}</question>\n"
         'Respond with JSON: {"queries": ["...", "..."]}'
     )
+
+
+def _prompt_version() -> str:
+    """Content hash of every prompt template: changes whenever any prompt text changes."""
+    import hashlib
+    import inspect
+
+    src = SYSTEM_PROMPT + NOT_FOUND_MESSAGE + "".join(
+        inspect.getsource(f) for f in (answer_prompt, rewrite_prompt, expand_prompt))
+    return hashlib.sha256(src.encode()).hexdigest()[:12]
+
+
+PROMPT_VERSION = _prompt_version()
