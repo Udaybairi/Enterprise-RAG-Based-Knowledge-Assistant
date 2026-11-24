@@ -7,7 +7,7 @@ from app.config import Settings
 from app.core.exceptions import ProviderError
 from app.core.logging import get_logger
 from app.llm.base import LLMClient
-from app.llm.model_resolver import friendly_error, is_model_not_found, resolver
+from app.llm.model_resolver import friendly_error, is_capacity_error, is_model_not_found, resolver
 from app.llm.retry import with_retries
 
 log = get_logger(__name__)
@@ -41,18 +41,38 @@ class GeminiLLM(LLMClient):
             kwargs["response_mime_type"] = "application/json"
         return self._types.GenerateContentConfig(**kwargs)
 
+    MAX_ALTERNATES = 2
+
     def _call(self, role: str, wanted: str, fn):
-        """Run ``fn(model)``; if the model is not available to this key, switch once to a suitable one."""
+        """Run ``fn(model)`` with graceful degradation:
+
+        * model not found for this key  -> switch to the best available model for the role;
+        * overloaded / out of quota after retries -> try up to MAX_ALTERNATES other models.
+        A model that works is remembered for this process.
+        """
         model = resolver.resolved(wanted, role)
-        try:
-            return fn(model)
-        except Exception as exc:  # noqa: BLE001
-            if not is_model_not_found(exc):
-                raise
-            substitute = resolver.substitute(self.client, wanted, role)
-            if substitute is None:
-                raise
-            return fn(substitute)
+        tried: set[str] = set()
+        alternates_left = self.MAX_ALTERNATES
+        while True:
+            tried.add(model)
+            try:
+                result = fn(model)
+                resolver.remember(wanted, role, model)
+                return result
+            except Exception as exc:  # noqa: BLE001
+                if is_model_not_found(exc):
+                    nxt = next(iter(resolver.alternatives(self.client, wanted, role, tried)), None)
+                elif is_capacity_error(exc) and alternates_left > 0:
+                    alternates_left -= 1
+                    nxt = next(iter(resolver.alternatives(self.client, wanted, role, tried)), None)
+                    if nxt:
+                        log.warning("Gemini model %r unavailable (%s); trying %r", model,
+                                    getattr(exc, "code", type(exc).__name__), nxt)
+                else:
+                    nxt = None
+                if nxt is None:
+                    raise
+                model = nxt
 
     def generate(self, prompt, *, system=None, temperature=None, max_tokens=None, json_mode=False,
                  utility=False) -> str:
@@ -74,14 +94,13 @@ class GeminiLLM(LLMClient):
         cfg = self._config(system, temperature, max_tokens)
 
         def open_stream(model):
-            # Errors such as "model not found" surface on the first chunk, so read it here
-            # (inside the fallback) before handing the stream to the caller.
-            it = with_retries(lambda: self.client.models.generate_content_stream(model=model, contents=prompt,
-                                                                                 config=cfg),
-                              max_retries=3, what="gemini stream")
-            it = iter(it)
-            first = next(it, None)
-            return first, it
+            # Errors (not found, 503 overloaded, 429 quota) surface when the first chunk is read, so
+            # opening the stream AND reading the first chunk are retried together, inside the fallback.
+            def attempt():
+                it = iter(self.client.models.generate_content_stream(model=model, contents=prompt, config=cfg))
+                return next(it, None), it
+
+            return with_retries(attempt, max_retries=3, what=f"gemini stream ({model})")
 
         try:
             first, it = self._call("chat", self.model, open_stream)

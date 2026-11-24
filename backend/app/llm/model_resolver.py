@@ -33,19 +33,24 @@ def _rank(name: str) -> tuple:
     return (stable, version, not alias, -len(name))
 
 
-def choose_model(available: dict[str, list[str]], wanted: str, role: str) -> str | None:
-    """``available`` maps model name (without ``models/``) to its supported actions."""
+def candidates(available: dict[str, list[str]], wanted: str, role: str) -> list[str]:
+    """Usable models for the role, best first (the configured model first if it is usable)."""
     action = _ACTION[role]
     usable = {n for n, actions in available.items() if action in (actions or [])}
-    if wanted in usable:
-        return wanted
+    ordered: list[str] = [wanted] if wanted in usable else []
     if role != "embedding":
         usable = {n for n in usable if n.startswith("gemini") and not any(x in n for x in _EXCLUDE)}
     for pref in _PREFS[role]:
-        matches = [n for n in usable if pref(n)]
-        if matches:
-            return max(matches, key=_rank)
-    return None
+        for n in sorted((n for n in usable if pref(n)), key=_rank, reverse=True):
+            if n not in ordered:
+                ordered.append(n)
+    return ordered
+
+
+def choose_model(available: dict[str, list[str]], wanted: str, role: str) -> str | None:
+    """``available`` maps model name (without ``models/``) to its supported actions."""
+    ranked = candidates(available, wanted, role)
+    return ranked[0] if ranked else None
 
 
 class ModelResolver:
@@ -66,17 +71,19 @@ class ModelResolver:
                                    for m in client.models.list()}
             return self._available
 
-    def substitute(self, client, wanted: str, role: str) -> str | None:
-        """A replacement for ``wanted`` (or None if nothing suitable / it is already the choice)."""
-        current = self.resolved(wanted, role)
-        choice = choose_model(self.list_models(client), wanted, role)
-        if choice is None or choice == current:
-            return None
-        log.warning("Gemini model %r is not available for this key; using %r instead. "
-                    "Set the GEMINI_* model variable to make this explicit.", current, choice)
-        with self._lock:
-            self._resolved[(wanted, role)] = choice
-        return choice
+    def alternatives(self, client, wanted: str, role: str, exclude: set[str]) -> list[str]:
+        """Other usable models for the role, best first, for when one is overloaded or out of quota."""
+        try:
+            available = self.list_models(client)
+        except Exception:  # noqa: BLE001
+            return []
+        return [m for m in candidates(available, wanted, role) if m not in exclude]
+
+    def remember(self, wanted: str, role: str, model: str) -> None:
+        if self._resolved.get((wanted, role)) != model:
+            log.warning("Using Gemini model %r for %s (instead of %r).", model, role, self.resolved(wanted, role))
+            with self._lock:
+                self._resolved[(wanted, role)] = model
 
     def reset(self) -> None:
         with self._lock:
@@ -94,12 +101,19 @@ def is_model_not_found(exc: Exception) -> bool:
         code == 400 and "not supported" in msg and ("model" in msg or "generatecontent" in msg))
 
 
+def is_capacity_error(exc: Exception) -> bool:
+    """Overloaded, unavailable or out of quota: another model may still work."""
+    return getattr(exc, "code", None) in (429, 500, 503, 504)
+
+
 def friendly_error(exc: Exception, what: str) -> str:
     """Short user-facing message; the full provider response is logged, not shown."""
     code = getattr(exc, "code", None)
     status = getattr(exc, "status", None)
     if code == 429:
         return f"{what} is rate-limited or out of quota right now. Please try again shortly."
+    if code in (500, 503, 504):
+        return f"{what} is temporarily overloaded at Google (HTTP {code}). Please try again in a minute."
     if code in (401, 403):
         return f"{what} rejected the API key (HTTP {code}). Check GOOGLE_API_KEY."
     if is_model_not_found(exc):

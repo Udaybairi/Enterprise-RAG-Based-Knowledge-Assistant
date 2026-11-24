@@ -38,6 +38,7 @@ class _FakeModels:
         self.available = available
         self.calls: list[str] = []
         self.list_calls = 0
+        self.unavailable: dict[str, int] = {}  # model -> number of 503s still to return
 
     def list(self):
         self.list_calls += 1
@@ -55,6 +56,10 @@ class _FakeModels:
         def gen():
             if model not in self.available:
                 raise _not_found(model)  # raised lazily on first chunk, like the real SDK
+            if self.unavailable.get(model, 0) > 0:
+                self.unavailable[model] -= 1
+                raise errors.APIError(503, {"error": {"code": 503, "status": "UNAVAILABLE",
+                                                      "message": "The model is overloaded."}})
             yield SimpleNamespace(text="Hello ")
             yield SimpleNamespace(text=f"from {model}")
 
@@ -62,7 +67,10 @@ class _FakeModels:
 
 
 @pytest.fixture
-def llm():
+def llm(monkeypatch):
+    from app.llm import retry
+
+    monkeypatch.setattr(retry.time, "sleep", lambda s: None)
     from app.llm.gemini_llm import GeminiLLM
 
     resolver.reset()
@@ -96,3 +104,23 @@ def test_unrecoverable_error_is_readable(llm):
 def test_friendly_messages():
     assert "rate-limited" in friendly_error(errors.APIError(429, {"error": {"code": 429}}), "The AI model")
     assert "API key" in friendly_error(errors.APIError(403, {"error": {"code": 403}}), "The AI model")
+
+
+def test_stream_retries_503_on_first_chunk(llm):
+    """Production bug: a 503 on the first streamed chunk was not retried at all."""
+    llm.client.models.unavailable = {"gemini-3.1-flash": 2}
+    assert "".join(llm.stream("q")) == "Hello from gemini-3.1-flash"
+    assert llm.client.models.calls.count("gemini-3.1-flash") == 3  # 2 failures + success
+
+
+def test_persistently_overloaded_model_falls_back_to_next_best(llm):
+    llm.client.models.unavailable = {"gemini-3.1-flash": 99}
+    assert "".join(llm.stream("q")) == "Hello from gemini-2.5-flash"
+    assert resolver.resolved("gemini-flash-latest", "chat") == "gemini-2.5-flash"  # remembered
+
+
+def test_overloaded_everywhere_gives_readable_error(llm):
+    llm.client.models.unavailable = {m: 99 for m in AVAILABLE}
+    with pytest.raises(ProviderError) as e:
+        "".join(llm.stream("q"))
+    assert "temporarily overloaded" in e.value.message
