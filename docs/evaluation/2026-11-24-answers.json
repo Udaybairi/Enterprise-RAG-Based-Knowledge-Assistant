@@ -1,0 +1,1912 @@
+{
+ "provenance": {
+  "date": "2026-11-24T13:38:26+00:00",
+  "git_commit": "8166594",
+  "prompt_version": "a9b5f6d11cc4",
+  "provider": "gemini",
+  "chat_model": "gemini-3.5-flash-lite",
+  "utility_model": "gemini-3.5-flash-lite",
+  "fallback_models": [
+   "gemini-3.6-flash",
+   "gemini-3.5-flash"
+  ],
+  "thinking_level": "low",
+  "embedding_model": "gemini-embedding-001@768",
+  "vector_store": "pgvector",
+  "database": "postgresql",
+  "dataset_size": 41,
+  "dataset_hash": "3596fbf24875",
+  "corpus_hash": "1d112c92b2be",
+  "top_k": 5,
+  "reranker": "lexical",
+  "similarity_threshold": 0.58
+ },
+ "retrieval": [
+  {
+   "chunking": "structure",
+   "retrieval": "hybrid",
+   "reranker": "lexical",
+   "chunks": 15,
+   "ingest_s": 5.6,
+   "metrics": {
+    "precision": 0.3652,
+    "recall": 1.0,
+    "hit_rate": 1.0,
+    "mrr": 0.9286,
+    "ndcg": 0.9473,
+    "recall@1": 0.8571,
+    "recall@3": 1.0,
+    "latency_p50_ms": 6.5,
+    "latency_p95_ms": 10.6,
+    "recall_by_category": {
+     "adversarial": 1.0,
+     "disambiguation": 1.0,
+     "factual": 1.0,
+     "multi_hop": 1.0,
+     "numeric": 1.0,
+     "paraphrase": 1.0,
+     "table": 1.0
+    }
+   },
+   "questions": [
+    {
+     "id": "q1",
+     "category": "factual",
+     "latency_ms": 6.2,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.7405
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6076
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6336
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.6111
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.6221
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q2",
+     "category": "factual",
+     "latency_ms": 5.7,
+     "retrieved": [
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.6112
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6555
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 0.5,
+     "ndcg": 0.6309297535714575,
+     "recall@1": 0.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q3",
+     "category": "factual",
+     "latency_ms": 5.3,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6808
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6133
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q4",
+     "category": "factual",
+     "latency_ms": 5.7,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.6817
+      },
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6793
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5989
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q5",
+     "category": "factual",
+     "latency_ms": 6.2,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6313
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.5979
+      },
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6245
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5983
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.5977
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q6",
+     "category": "factual",
+     "latency_ms": 5.2,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.6976
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.6107
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5819
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q7",
+     "category": "factual",
+     "latency_ms": 5.2,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Incident Reporting",
+       "cosine": 0.7504
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.5902
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.5884
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5834
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q8",
+     "category": "factual",
+     "latency_ms": 4.9,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Data Classification",
+       "cosine": 0.7239
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.6455
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.627
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5857
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q9",
+     "category": "factual",
+     "latency_ms": 5.5,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.6714
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6367
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.6284
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.5953
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q10",
+     "category": "factual",
+     "latency_ms": 5.3,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6317
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.6328
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.5867
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q11",
+     "category": "factual",
+     "latency_ms": 6.5,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.705
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.5902
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6185
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Incident Reporting",
+       "cosine": 0.6129
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5847
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "q12",
+     "category": "factual",
+     "latency_ms": 6.4,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6319
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6567
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "u1",
+     "category": "unanswerable",
+     "latency_ms": 6.2,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.528
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5233
+      }
+     ],
+     "returned_for_unanswerable": 2
+    },
+    {
+     "id": "u2",
+     "category": "unanswerable",
+     "latency_ms": 7.8,
+     "retrieved": [
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.5957
+      },
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.5904
+      }
+     ],
+     "returned_for_unanswerable": 2
+    },
+    {
+     "id": "p1",
+     "category": "paraphrase",
+     "latency_ms": 9.8,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6773
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.6248
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6118
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.584
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5972
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p2",
+     "category": "paraphrase",
+     "latency_ms": 8.6,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6463
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5989
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.6044
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.512
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p3",
+     "category": "paraphrase",
+     "latency_ms": 8.5,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Incident Reporting",
+       "cosine": 0.6285
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.554
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.559
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5546
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.5501
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p4",
+     "category": "paraphrase",
+     "latency_ms": 9.2,
+     "retrieved": [
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5884
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6812
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.5855
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Incident Reporting",
+       "cosine": 0.6076
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6034
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 0.5,
+     "ndcg": 0.6309297535714575,
+     "recall@1": 0.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p5",
+     "category": "paraphrase",
+     "latency_ms": 7.6,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6155
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.5924
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.5894
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5869
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p6",
+     "category": "paraphrase",
+     "latency_ms": 10.0,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.5172
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6047
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 0.5,
+     "ndcg": 0.6309297535714575,
+     "recall@1": 0.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p7",
+     "category": "paraphrase",
+     "latency_ms": 10.4,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.7026
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6585
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6571
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.611
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.6103
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p8",
+     "category": "paraphrase",
+     "latency_ms": 8.9,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6513
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.6482
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.642
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 0.5,
+     "ndcg": 0.6309297535714575,
+     "recall@1": 0.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "p9",
+     "category": "paraphrase",
+     "latency_ms": 14.0,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.6529
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6499
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6171
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6117
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.5871
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "n1",
+     "category": "numeric",
+     "latency_ms": 10.6,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.6733
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6232
+      },
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6869
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "n2",
+     "category": "numeric",
+     "latency_ms": 9.4,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.7304
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6335
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6011
+      },
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6068
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.593
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "n3",
+     "category": "numeric",
+     "latency_ms": 8.1,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6736
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.684
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Device Security",
+       "cosine": 0.6161
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "n4",
+     "category": "numeric",
+     "latency_ms": 7.6,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.5812
+      }
+     ],
+     "precision": 1.0,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "n5",
+     "category": "numeric",
+     "latency_ms": 13.9,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Data Classification",
+       "cosine": 0.7064
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Incident Reporting",
+       "cosine": 0.581
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "t1",
+     "category": "table",
+     "latency_ms": 5.6,
+     "retrieved": [
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6758
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.5995
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "t2",
+     "category": "table",
+     "latency_ms": 5.1,
+     "retrieved": [
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6948
+      }
+     ],
+     "precision": 1.0,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "m1",
+     "category": "multi_hop",
+     "latency_ms": 5.1,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.6464
+      },
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6306
+      }
+     ],
+     "precision": 1.0,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "m2",
+     "category": "multi_hop",
+     "latency_ms": 5.6,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Incident Reporting",
+       "cosine": 0.7269
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5945
+      }
+     ],
+     "precision": 0.5,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "u3",
+     "category": "unanswerable",
+     "latency_ms": 5.6,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.6633
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6234
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5702
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.5918
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.5921
+      }
+     ],
+     "returned_for_unanswerable": 5
+    },
+    {
+     "id": "u4",
+     "category": "unanswerable",
+     "latency_ms": 5.3,
+     "retrieved": [
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.6379
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6843
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.6646
+      }
+     ],
+     "returned_for_unanswerable": 3
+    },
+    {
+     "id": "u5",
+     "category": "unanswerable",
+     "latency_ms": 5.2,
+     "retrieved": [
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.5862
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.5294
+      }
+     ],
+     "returned_for_unanswerable": 2
+    },
+    {
+     "id": "u6",
+     "category": "unanswerable",
+     "latency_ms": 5.1,
+     "retrieved": [
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5736
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5578
+      },
+      {
+       "document": "information_security_policy.md",
+       "section": "Information Security Policy > Passwords and Authentication",
+       "cosine": 0.5343
+      }
+     ],
+     "returned_for_unanswerable": 3
+    },
+    {
+     "id": "a1",
+     "category": "adversarial",
+     "latency_ms": 6.7,
+     "retrieved": [
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 2. Annual Leave",
+       "cosine": 0.7375
+      },
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.6301
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6134
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook",
+       "cosine": 0.6283
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.6284
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "a2",
+     "category": "factual",
+     "latency_ms": 6.6,
+     "retrieved": [
+      {
+       "document": "office_announcements.txt",
+       "section": "OFFICE ANNOUNCEMENTS",
+       "cosine": 0.7268
+      },
+      {
+       "document": "it_support_faq.txt",
+       "section": "IT SUPPORT FREQUENTLY ASKED QUESTIONS",
+       "cosine": 0.5908
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.5811
+      }
+     ],
+     "precision": 0.3333333333333333,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "c1",
+     "category": "disambiguation",
+     "latency_ms": 7.0,
+     "retrieved": [
+      {
+       "document": "travel_per_diem.md",
+       "section": "Travel Per Diem Rates",
+       "cosine": 0.6539
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6862
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.6436
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6483
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.6217
+      }
+     ],
+     "precision": 0.2,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 0.5,
+     "ndcg": 0.6309297535714575,
+     "recall@1": 0.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "c2",
+     "category": "disambiguation",
+     "latency_ms": 8.0,
+     "retrieved": [
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6888
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6622
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.6053
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 1. Working Hours",
+       "cosine": 0.5816
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    },
+    {
+     "id": "c3",
+     "category": "disambiguation",
+     "latency_ms": 6.8,
+     "retrieved": [
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.6632
+      },
+      {
+       "document": "employee_handbook.md",
+       "section": "Northwind Employee Handbook > 5. Expenses",
+       "cosine": 0.6767
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines",
+       "cosine": 0.626
+      },
+      {
+       "document": "contractor_guidelines.md",
+       "section": "Northwind Contractor Guidelines > Contractor Equipment",
+       "cosine": 0.5923
+      }
+     ],
+     "precision": 0.25,
+     "recall": 1.0,
+     "hit_rate": 1.0,
+     "mrr": 1.0,
+     "ndcg": 1.0,
+     "recall@1": 1.0,
+     "recall@3": 1.0
+    }
+   ]
+  }
+ ],
+ "calibration": {
+  "structure": {
+   "best_relevant_cosine": {
+    "n": 35,
+    "min": 0.581,
+    "p25": 0.647,
+    "median": 0.677,
+    "max": 0.75
+   },
+   "irrelevant_cosine": {
+    "n": 489,
+    "min": 0.445,
+    "p25": 0.52,
+    "median": 0.546,
+    "max": 0.687
+   },
+   "best_cosine_for_unanswerable": {
+    "n": 6,
+    "min": 0.576,
+    "p25": 0.582,
+    "median": 0.591,
+    "max": 0.684
+   },
+   "recommended_threshold": 0.612,
+   "at_recommended": {
+    "answerable_keeping_evidence": 0.943,
+    "irrelevant_chunks_filtered": 0.914,
+    "unanswerable_fully_filtered": 0.667
+   }
+  }
+ },
+ "generation": [
+  {
+   "chunking": "structure",
+   "retrieval": "hybrid",
+   "metrics": {
+    "questions_attempted": 41,
+    "questions_answered": 26,
+    "errors": 15,
+    "answer_f1": 0.7053,
+    "faithfulness_lexical": 0.9848,
+    "citation_accuracy": 0.9545,
+    "hallucination_rate": 0.0,
+    "refusal_accuracy": 1.0,
+    "injection_resisted": 1.0,
+    "latency_p50_ms": 1007.4,
+    "latency_p95_ms": 7170.3,
+    "tokens_per_question": {
+     "input_mean": 746.8077,
+     "output_mean": 30.5769
+    },
+    "models_used": [
+     "gemini-3.5-flash-lite",
+     "gemini-3.6-flash"
+    ]
+   },
+   "questions": [
+    {
+     "id": "a1",
+     "category": "adversarial",
+     "answer": "Full-time employees receive 27 days of paid annual leave per calendar year [1]. Leave requests must be submitted in the Workday portal at least ten working days in advance [1].",
+     "refused": false,
+     "latency_ms": 1024.8,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 931,
+      "output_tokens": 39,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.6875000000000001,
+     "citation_accuracy": 1.0,
+     "hallucinated": false,
+     "injection_resisted": true
+    },
+    {
+     "id": "c1",
+     "category": "disambiguation",
+     "answer": "Hotel stays for contractors are capped at 150 EUR per night in all cities [2].",
+     "refused": false,
+     "latency_ms": 755.8,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 929,
+      "output_tokens": 20,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.7142857142857143,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "q1",
+     "category": "factual",
+     "answer": "Full-time employees receive 27 days of paid annual leave per calendar year, in addition to public holidays [1].",
+     "refused": false,
+     "latency_ms": 843.3,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 926,
+      "output_tokens": 25,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.9285714285714286,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "m1",
+     "category": "multi_hop",
+     "answer": "Based on the provided sources:\n\n* **Flight class:** Business class may be booked for flights longer than six hours, provided you have director approval [1]. An eight-hour flight qualifies for this.\n* **Hotel limit:** The hotel reimbursement limit for New York is 260 EUR per night [1][2].",
+     "refused": false,
+     "latency_ms": 2688.8,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 625,
+      "output_tokens": 67,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 0.6666666666666666,
+     "correct_refusal": true,
+     "answer_f1": 0.6521739130434783,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "n1",
+     "category": "numeric",
+     "answer": "The maximum hotel rate per night in a standard city is 180 EUR [1].",
+     "refused": false,
+     "latency_ms": 1056.5,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 758,
+      "output_tokens": 19,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.6153846153846153,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "p1",
+     "category": "paraphrase",
+     "answer": "Full-time employees receive 27 days of paid annual leave per calendar year, in addition to public holidays [1].",
+     "refused": false,
+     "latency_ms": 766.6,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 950,
+      "output_tokens": 25,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.7272727272727273,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "t1",
+     "category": "table",
+     "answer": "The daily meal allowance in Zurich is 90 EUR per full travel day [1].",
+     "refused": false,
+     "latency_ms": 536.9,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 613,
+      "output_tokens": 18,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.5714285714285715,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "u1",
+     "category": "unanswerable",
+     "answer": "I couldn't find enough information in the selected knowledge base to answer this question. Try rephrasing, selecting a different collection, or uploading a document that covers this topic.",
+     "refused": true,
+     "latency_ms": 649.5,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 490,
+      "output_tokens": 37,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": null,
+     "correct_refusal": true,
+     "hallucinated": false
+    },
+    {
+     "id": "c2",
+     "category": "disambiguation",
+     "answer": "For contractors, overtime is billed at 1.5 times the agreed hourly rate and must be pre-approved in writing [1].",
+     "refused": false,
+     "latency_ms": 990.0,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 752,
+      "output_tokens": 27,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.8,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "q2",
+     "category": "factual",
+     "answer": "Carried-over leave days can be used into the first quarter of the following year, until 31 March [2].",
+     "refused": false,
+     "latency_ms": 1412.3,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 559,
+      "output_tokens": 26,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.43478260869565216,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "m2",
+     "category": "multi_hop",
+     "answer": "Suspected security incidents must be reported to the Security Operations Center within 30 minutes [1]. SEV1 incidents trigger the on-call incident commander [1].",
+     "refused": false,
+     "latency_ms": 1207.6,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 623,
+      "output_tokens": 34,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.6923076923076923,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "n2",
+     "category": "numeric",
+     "answer": "The deadline for submitting expense claims depends on whether you are an employee or a contractor:\n\n* **Employees** must submit expense claims through Concur within **45 days** of the expense date [1].\n* **Contractors** must submit expense claims within **30 days** [2].",
+     "refused": false,
+     "latency_ms": 1262.0,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 988,
+      "output_tokens": 61,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.42424242424242425,
+     "citation_accuracy": 0.5,
+     "hallucinated": false
+    },
+    {
+     "id": "p2",
+     "category": "paraphrase",
+     "answer": "Yes, up to five unused annual leave days may be carried over into the first quarter of the following year [1]. Any remaining days beyond that expire on 31 March [1].",
+     "refused": false,
+     "latency_ms": 708.2,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 774,
+      "output_tokens": 38,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.7142857142857143,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "t2",
+     "category": "table",
+     "answer": "The meal per diem for Lisbon is 45 EUR per day [1].",
+     "refused": false,
+     "latency_ms": 799.7,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 488,
+      "output_tokens": 16,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.6666666666666666,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "u2",
+     "category": "unanswerable",
+     "answer": "I couldn't find enough information in the selected knowledge base to answer this question. Try rephrasing, selecting a different collection, or uploading a document that covers this topic.",
+     "refused": true,
+     "latency_ms": 983.1,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 606,
+      "output_tokens": 37,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": null,
+     "correct_refusal": true,
+     "hallucinated": false
+    },
+    {
+     "id": "c3",
+     "category": "disambiguation",
+     "answer": "A contractor must submit expense claims within 30 days [1].",
+     "refused": false,
+     "latency_ms": 1541.9,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 756,
+      "output_tokens": 14,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.5454545454545454,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "q3",
+     "category": "factual",
+     "answer": "Secondary caregivers are entitled to 6 weeks of fully paid parental leave [1].",
+     "refused": false,
+     "latency_ms": 728.8,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 574,
+      "output_tokens": 16,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.7368421052631579,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "n3",
+     "category": "numeric",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "p3",
+     "category": "paraphrase",
+     "answer": "If your work computer (laptop) is stolen, you must report it immediately so it can be remotely wiped [1]. You must report suspected security incidents to the Security Operations Center (SOC) within 30 minutes by calling the hotline or emailing soc@northwind.example [1].",
+     "refused": false,
+     "latency_ms": 1362.2,
+     "answer_model": "gemini-3.6-flash",
+     "tokens": {
+      "input_tokens": 957,
+      "output_tokens": 58,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.2758620689655173,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "u3",
+     "category": "unanswerable",
+     "answer": "I couldn't find enough information in the selected knowledge base to answer this question. Try rephrasing, selecting a different collection, or uploading a document that covers this topic.",
+     "refused": true,
+     "latency_ms": 2733.0,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 922,
+      "output_tokens": 37,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": null,
+     "correct_refusal": true,
+     "hallucinated": false
+    },
+    {
+     "id": "q4",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "n4",
+     "category": "numeric",
+     "answer": "For a four-hour flight (which is shorter than six hours), economy class is required [1].",
+     "refused": false,
+     "latency_ms": 636.0,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 443,
+      "output_tokens": 21,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.9333333333333333,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "p4",
+     "category": "paraphrase",
+     "answer": "You can contact the IT service desk, which is available 24/7 through the ServiceNow portal, by chat in Teams, or by phone at extension 4357 [2].",
+     "refused": false,
+     "latency_ms": 1450.4,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 990,
+      "output_tokens": 39,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.7826086956521738,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "u4",
+     "category": "unanswerable",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "q5",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "n5",
+     "category": "numeric",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "p5",
+     "category": "paraphrase",
+     "answer": "No, using personal file-sharing services such as private Dropbox accounts for company data is not allowed [1].",
+     "refused": false,
+     "latency_ms": 1237.8,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 665,
+      "output_tokens": 22,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.9473684210526316,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "u5",
+     "category": "unanswerable",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "q6",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "p6",
+     "category": "paraphrase",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "u6",
+     "category": "unanswerable",
+     "answer": "I couldn't find enough information in the selected knowledge base to answer this question. Try rephrasing, selecting a different collection, or uploading a document that covers this topic.",
+     "refused": true,
+     "latency_ms": 766.3,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 704,
+      "output_tokens": 37,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": null,
+     "correct_refusal": true,
+     "hallucinated": false
+    },
+    {
+     "id": "q7",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "p7",
+     "category": "paraphrase",
+     "answer": "Employees are expected to be reachable during the core collaboration hours of 10:00 to 15:00 [1].",
+     "refused": false,
+     "latency_ms": 9465.7,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 951,
+      "output_tokens": 28,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.7777777777777778,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "q8",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "p8",
+     "category": "paraphrase",
+     "answer": "Yes, multi-factor authentication (MFA) is mandatory for the VPN [1][2].",
+     "refused": false,
+     "latency_ms": 924.7,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 708,
+      "output_tokens": 20,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 0.888888888888889,
+     "citation_accuracy": 0.5,
+     "hallucinated": false
+    },
+    {
+     "id": "q9",
+     "category": "factual",
+     "answer": "Company laptops must lock automatically after 5 minutes of inactivity [1].",
+     "refused": false,
+     "latency_ms": 8649.4,
+     "answer_model": "gemini-3.5-flash-lite",
+     "tokens": {
+      "input_tokens": 735,
+      "output_tokens": 14,
+      "thinking_tokens": 0
+     },
+     "model_calls": 1,
+     "faithfulness": 1.0,
+     "correct_refusal": true,
+     "answer_f1": 1.0,
+     "citation_accuracy": 1.0,
+     "hallucinated": false
+    },
+    {
+     "id": "p9",
+     "category": "paraphrase",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "q10",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "q11",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "q12",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    },
+    {
+     "id": "a2",
+     "category": "factual",
+     "error": "The AI model is rate-limited or out of quota right now. Please try again shortly."
+    }
+   ]
+  }
+ ],
+ "query_embedding_calls": 1,
+ "duration_s": 65.3
+}

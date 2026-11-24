@@ -52,6 +52,20 @@ def retrieval_metrics(retrieved: list[tuple[str, str]], gold_docs: Sequence[str]
     return {"precision": precision, "recall": recall, "hit_rate": 1.0 if any(rel) else 0.0, "mrr": mrr}
 
 
+def ndcg_at_k(relevance: Sequence[bool], n_relevant_available: int, k: int) -> float:
+    """Binary-relevance nDCG@k. The ideal ranking puts every available relevant chunk first."""
+    rel = list(relevance)[:k]
+    dcg = sum(1.0 / np.log2(i + 2) for i, r in enumerate(rel) if r)
+    ideal_hits = min(k, n_relevant_available)
+    idcg = sum(1.0 / np.log2(i + 2) for i in range(ideal_hits))
+    return dcg / idcg if idcg else 0.0
+
+
+def percentile(values: Sequence[float], q: float) -> float | None:
+    vals = [v for v in values if v is not None]
+    return round(float(np.percentile(vals, q)), 1) if vals else None
+
+
 def cosine(a: np.ndarray, b: np.ndarray) -> float:
     na, nb = np.linalg.norm(a), np.linalg.norm(b)
     return float(np.dot(a, b) / (na * nb)) if na and nb else 0.0

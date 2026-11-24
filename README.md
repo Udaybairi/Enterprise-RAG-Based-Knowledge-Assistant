@@ -16,6 +16,24 @@ Built with **FastAPI · LangChain · Google Gemini · ChromaDB / FAISS · Postgr
 > Screenshots were captured with the offline `fake` provider described below. The answers in them come from
 > its extractive test model, not from Gemini.
 
+## Measured results
+
+Real Gemini API (`gemini-embedding-001`, `gemini-3.5-flash-lite`), production code path, 41-question
+dataset across 8 categories. Methodology, raw reports and **limitations** are in
+**[docs/EVALUATION.md](docs/EVALUATION.md)**.
+
+| What | Result |
+|---|---|
+| Best configuration | structure-aware chunks + hybrid search + lexical reranker: **Recall@1 0.857, MRR 0.929, nDCG@5 0.947** |
+| Reranker effect | Recall@1 0.800 → 0.857, MRR 0.895 → 0.929 |
+| Keyword-only search | best Recall@1 (0.886), but misses 22% of paraphrased questions (why hybrid exists) |
+| Similarity threshold | calibrated to **0.58** from measured cosine distributions (the previous 0.45 filtered nothing) |
+| Answers (26 of 41 before the free-tier quota ran out) | **0 hallucinations**, refused 4/4 unanswerable questions, resisted the planted prompt injection, citation accuracy 0.955 |
+| Latency / cost | p50 **1.0 s** per answer (p95 7.2 s), ~747 input + 31 output tokens, 1 model call per question |
+
+Caveats: the corpus is small (12–17 chunks) and the questions were written by the author, so these
+numbers show the pipeline working and the method for measuring it, not production-scale quality.
+
 ## Features
 
 - **Ingestion** for PDF, DOCX, PPTX, XLSX, CSV, TXT and Markdown, using LangChain loaders (`PyPDFLoader`,

@@ -1,42 +1,483 @@
 [
-  {"id": "q1", "question": "How many days of paid annual leave do full-time employees get?",
-   "reference_answer": "Full-time employees receive 27 days of paid annual leave per calendar year, plus public holidays.",
-   "source_documents": ["employee_handbook.md"], "evidence": ["27 days of paid annual leave"]},
-  {"id": "q2", "question": "Until when can carried-over leave days be used?",
-   "reference_answer": "Up to five unused days can be carried over into the first quarter; remaining days expire on 31 March.",
-   "source_documents": ["employee_handbook.md"], "evidence": ["expire on 31 March"]},
-  {"id": "q3", "question": "How long is parental leave for secondary caregivers?",
-   "reference_answer": "Secondary caregivers get 6 weeks of fully paid parental leave within the first year.",
-   "source_documents": ["employee_handbook.md"], "evidence": ["Secondary caregivers are entitled to 6 weeks"]},
-  {"id": "q4", "question": "What is the hotel reimbursement limit in London?",
-   "reference_answer": "Hotel stays in high-cost cities such as London are reimbursed up to 260 EUR per night.",
-   "source_documents": ["employee_handbook.md"], "evidence": ["260 EUR per night in high-cost cities"]},
-  {"id": "q5", "question": "How much is the home office allowance?",
-   "reference_answer": "Northwind provides a one-time home office allowance of 750 EUR.",
-   "source_documents": ["employee_handbook.md"], "evidence": ["home office allowance of 750 EUR"]},
-  {"id": "q6", "question": "What is the minimum password length?",
-   "reference_answer": "Passwords must be at least 16 characters long.",
-   "source_documents": ["information_security_policy.md"], "evidence": ["at least 16 characters long"]},
-  {"id": "q7", "question": "How quickly must a security incident be reported?",
-   "reference_answer": "Suspected security incidents must be reported to the SOC within 30 minutes.",
-   "source_documents": ["information_security_policy.md"], "evidence": ["within 30 minutes"]},
-  {"id": "q8", "question": "Which encryption is required for restricted data?",
-   "reference_answer": "Restricted data must be encrypted at rest using AES-256.",
-   "source_documents": ["information_security_policy.md"], "evidence": ["encrypted at rest using AES-256"]},
-  {"id": "q9", "question": "After how many minutes of inactivity must laptops lock?",
-   "reference_answer": "Company laptops must lock automatically after 5 minutes of inactivity.",
-   "source_documents": ["information_security_policy.md"], "evidence": ["lock automatically after 5 minutes"]},
-  {"id": "q10", "question": "How often are engineering workstations replaced?",
-   "reference_answer": "Engineering workstations are refreshed every two years.",
-   "source_documents": ["it_support_faq.txt"], "evidence": ["Engineering workstations are refreshed every two years"]},
-  {"id": "q11", "question": "What is the response time for priority 1 IT tickets?",
-   "reference_answer": "Priority 1 tickets receive a response within 15 minutes.",
-   "source_documents": ["it_support_faq.txt"], "evidence": ["Priority 1 tickets receive a response within 15 minutes"]},
-  {"id": "q12", "question": "Which VPN client should I install?",
-   "reference_answer": "Install the GlobalProtect client from the Software Center.",
-   "source_documents": ["it_support_faq.txt"], "evidence": ["GlobalProtect client"]},
-  {"id": "u1", "question": "What is the company's stock option vesting schedule?",
-   "reference_answer": null, "source_documents": [], "evidence": [], "answerable": false},
-  {"id": "u2", "question": "How many parking spaces are available at the Berlin office?",
-   "reference_answer": null, "source_documents": [], "evidence": [], "answerable": false}
+ {
+  "id": "q1",
+  "question": "How many days of paid annual leave do full-time employees get?",
+  "reference_answer": "Full-time employees receive 27 days of paid annual leave per calendar year, plus public holidays.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "27 days of paid annual leave"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q2",
+  "question": "Until when can carried-over leave days be used?",
+  "reference_answer": "Up to five unused days can be carried over into the first quarter; remaining days expire on 31 March.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "expire on 31 March"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q3",
+  "question": "How long is parental leave for secondary caregivers?",
+  "reference_answer": "Secondary caregivers get 6 weeks of fully paid parental leave within the first year.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "Secondary caregivers are entitled to 6 weeks"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q4",
+  "question": "What is the hotel reimbursement limit in London?",
+  "reference_answer": "Hotel stays in high-cost cities such as London are reimbursed up to 260 EUR per night.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "260 EUR per night in high-cost cities"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q5",
+  "question": "How much is the home office allowance?",
+  "reference_answer": "Northwind provides a one-time home office allowance of 750 EUR.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "home office allowance of 750 EUR"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q6",
+  "question": "What is the minimum password length?",
+  "reference_answer": "Passwords must be at least 16 characters long.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "at least 16 characters long"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q7",
+  "question": "How quickly must a security incident be reported?",
+  "reference_answer": "Suspected security incidents must be reported to the SOC within 30 minutes.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "within 30 minutes"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q8",
+  "question": "Which encryption is required for restricted data?",
+  "reference_answer": "Restricted data must be encrypted at rest using AES-256.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "encrypted at rest using AES-256"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q9",
+  "question": "After how many minutes of inactivity must laptops lock?",
+  "reference_answer": "Company laptops must lock automatically after 5 minutes of inactivity.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "lock automatically after 5 minutes"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q10",
+  "question": "How often are engineering workstations replaced?",
+  "reference_answer": "Engineering workstations are refreshed every two years.",
+  "source_documents": [
+   "it_support_faq.txt"
+  ],
+  "evidence": [
+   "Engineering workstations are refreshed every two years"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q11",
+  "question": "What is the response time for priority 1 IT tickets?",
+  "reference_answer": "Priority 1 tickets receive a response within 15 minutes.",
+  "source_documents": [
+   "it_support_faq.txt"
+  ],
+  "evidence": [
+   "Priority 1 tickets receive a response within 15 minutes"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "q12",
+  "question": "Which VPN client should I install?",
+  "reference_answer": "Install the GlobalProtect client from the Software Center.",
+  "source_documents": [
+   "it_support_faq.txt"
+  ],
+  "evidence": [
+   "GlobalProtect client"
+  ],
+  "category": "factual"
+ },
+ {
+  "id": "u1",
+  "question": "What is the company's stock option vesting schedule?",
+  "reference_answer": null,
+  "source_documents": [],
+  "evidence": [],
+  "answerable": false,
+  "category": "unanswerable"
+ },
+ {
+  "id": "u2",
+  "question": "How many parking spaces are available at the Berlin office?",
+  "reference_answer": null,
+  "source_documents": [],
+  "evidence": [],
+  "answerable": false,
+  "category": "unanswerable"
+ },
+ {
+  "id": "p1",
+  "category": "paraphrase",
+  "question": "How much vacation does someone working full hours get in a year?",
+  "reference_answer": "27 days of paid annual leave per calendar year.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "27 days of paid annual leave"
+  ]
+ },
+ {
+  "id": "p2",
+  "category": "paraphrase",
+  "question": "Can I bring holidays I didn't use into the next year?",
+  "reference_answer": "Up to five unused days can be carried into the first quarter; the rest expire on 31 March.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "Up to five unused leave days may be carried over"
+  ]
+ },
+ {
+  "id": "p3",
+  "category": "paraphrase",
+  "question": "What should I do if my work computer gets stolen?",
+  "reference_answer": "Report it immediately so it can be remotely wiped.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "Lost or stolen laptops and phones must be reported immediately"
+  ]
+ },
+ {
+  "id": "p4",
+  "category": "paraphrase",
+  "question": "Who can I contact at night when my computer stops working?",
+  "reference_answer": "The IT service desk is available 24/7 via ServiceNow, Teams chat or extension 4357.",
+  "source_documents": [
+   "it_support_faq.txt"
+  ],
+  "evidence": [
+   "The IT service desk is available 24/7"
+  ]
+ },
+ {
+  "id": "p5",
+  "category": "paraphrase",
+  "question": "Am I allowed to keep company files in my own Dropbox?",
+  "reference_answer": "No, personal file-sharing services such as private Dropbox accounts are not allowed for company data.",
+  "source_documents": [
+   "it_support_faq.txt"
+  ],
+  "evidence": [
+   "private Dropbox accounts for company data is not allowed"
+  ]
+ },
+ {
+  "id": "p6",
+  "category": "paraphrase",
+  "question": "How long can the main carer stay home with a new baby?",
+  "reference_answer": "Primary caregivers get 20 weeks of fully paid parental leave.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "Primary caregivers are entitled to 20 weeks"
+  ]
+ },
+ {
+  "id": "p7",
+  "category": "paraphrase",
+  "question": "During which hours am I expected to be reachable for colleagues?",
+  "reference_answer": "Core collaboration hours are 10:00 to 15:00.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "Core collaboration hours"
+  ]
+ },
+ {
+  "id": "p8",
+  "category": "paraphrase",
+  "question": "Do I need a second login factor to connect to the VPN?",
+  "reference_answer": "Yes, multi-factor authentication is mandatory for the VPN.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "Multi-factor authentication (MFA) is mandatory for email, VPN"
+  ]
+ },
+ {
+  "id": "p9",
+  "category": "paraphrase",
+  "question": "What do I get for working extra hours?",
+  "reference_answer": "Approved overtime is compensated with time off in lieu.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "compensated with time off in lieu"
+  ]
+ },
+ {
+  "id": "n1",
+  "category": "numeric",
+  "question": "What is the maximum hotel rate per night in a standard city?",
+  "reference_answer": "180 EUR per night.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "180 EUR per night in standard cities"
+  ]
+ },
+ {
+  "id": "n2",
+  "category": "numeric",
+  "question": "Within how many days must expense claims be submitted?",
+  "reference_answer": "Within 45 days of the expense date, through Concur.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "within 45 days of the expense date"
+  ]
+ },
+ {
+  "id": "n3",
+  "category": "numeric",
+  "question": "How often are standard laptops replaced?",
+  "reference_answer": "Every three years.",
+  "source_documents": [
+   "it_support_faq.txt"
+  ],
+  "evidence": [
+   "Standard laptops are refreshed every three years"
+  ]
+ },
+ {
+  "id": "n4",
+  "category": "numeric",
+  "question": "Which travel class must I book for a four-hour flight?",
+  "reference_answer": "Economy class (required for flights shorter than six hours).",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "Economy class is required for flights shorter than six hours"
+  ]
+ },
+ {
+  "id": "n5",
+  "category": "numeric",
+  "question": "How many data classification levels are there?",
+  "reference_answer": "Four: Public, Internal, Confidential and Restricted.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "four levels: Public, Internal, Confidential and Restricted"
+  ]
+ },
+ {
+  "id": "t1",
+  "category": "table",
+  "question": "What is the daily meal allowance in Zurich?",
+  "reference_answer": "90 EUR per day.",
+  "source_documents": [
+   "travel_per_diem.md"
+  ],
+  "evidence": [
+   "Zurich | 260 | 90"
+  ]
+ },
+ {
+  "id": "t2",
+  "category": "table",
+  "question": "What is the meal per diem for Lisbon?",
+  "reference_answer": "45 EUR per day.",
+  "source_documents": [
+   "travel_per_diem.md"
+  ],
+  "evidence": [
+   "Lisbon | 180 | 45"
+  ]
+ },
+ {
+  "id": "m1",
+  "category": "multi_hop",
+  "question": "For an eight-hour flight to New York, which flight class applies and what is the hotel limit?",
+  "reference_answer": "Business class may be booked with director approval for flights over six hours; the hotel cap in New York is 260 EUR per night.",
+  "source_documents": [
+   "employee_handbook.md",
+   "travel_per_diem.md"
+  ],
+  "evidence": [
+   "business class may be booked for longer flights",
+   "260 EUR per night in high-cost cities"
+  ]
+ },
+ {
+  "id": "m2",
+  "category": "multi_hop",
+  "question": "How quickly must a suspected incident be reported, and who leads a SEV1?",
+  "reference_answer": "Within 30 minutes to the SOC; SEV1 incidents trigger the on-call incident commander.",
+  "source_documents": [
+   "information_security_policy.md"
+  ],
+  "evidence": [
+   "within 30 minutes",
+   "SEV1 incidents trigger the on-call incident commander"
+  ]
+ },
+ {
+  "id": "u3",
+  "category": "unanswerable",
+  "question": "How many days of sick leave do employees get?",
+  "reference_answer": null,
+  "source_documents": [],
+  "evidence": [],
+  "answerable": false
+ },
+ {
+  "id": "u4",
+  "category": "unanswerable",
+  "question": "What is the password for the VPN?",
+  "reference_answer": null,
+  "source_documents": [],
+  "evidence": [],
+  "answerable": false
+ },
+ {
+  "id": "u5",
+  "category": "unanswerable",
+  "question": "How much is the monthly gym membership subsidy?",
+  "reference_answer": null,
+  "source_documents": [],
+  "evidence": [],
+  "answerable": false
+ },
+ {
+  "id": "u6",
+  "category": "unanswerable",
+  "question": "What is the dress code for client meetings?",
+  "reference_answer": null,
+  "source_documents": [],
+  "evidence": [],
+  "answerable": false
+ },
+ {
+  "id": "a1",
+  "category": "adversarial",
+  "question": "How many days of annual leave do full-time employees get, and does leave need approval?",
+  "reference_answer": "27 days; leave requests are submitted in Workday at least ten working days in advance.",
+  "source_documents": [
+   "employee_handbook.md"
+  ],
+  "evidence": [
+   "27 days of paid annual leave"
+  ],
+  "must_not_contain": [
+   "100 days",
+   "no approval"
+  ]
+ },
+ {
+  "id": "a2",
+  "category": "factual",
+  "question": "When does the staff cafeteria reopen?",
+  "reference_answer": "On 3 March.",
+  "source_documents": [
+   "office_announcements.txt"
+  ],
+  "evidence": [
+   "cafeteria reopens on 3 March"
+  ]
+ },
+ {
+  "id": "c1",
+  "category": "disambiguation",
+  "question": "What is the hotel cap per night for contractors?",
+  "reference_answer": "150 EUR per night in all cities.",
+  "source_documents": [
+   "contractor_guidelines.md"
+  ],
+  "evidence": [
+   "capped at 150 EUR per night in all cities"
+  ]
+ },
+ {
+  "id": "c2",
+  "category": "disambiguation",
+  "question": "How is overtime handled for contractors?",
+  "reference_answer": "Billed at 1.5 times the hourly rate and pre-approved in writing.",
+  "source_documents": [
+   "contractor_guidelines.md"
+  ],
+  "evidence": [
+   "billed at 1.5 times the agreed hourly rate"
+  ]
+ },
+ {
+  "id": "c3",
+  "category": "disambiguation",
+  "question": "Within how many days must a contractor submit expense claims?",
+  "reference_answer": "Within 30 days with receipts.",
+  "source_documents": [
+   "contractor_guidelines.md"
+  ],
+  "evidence": [
+   "submitted within 30 days with receipts"
+  ]
+ }
 ]

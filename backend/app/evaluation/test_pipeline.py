@@ -202,7 +202,18 @@ def run_evaluation(chunking_strategies: list[str], retrieval_strategies: list[st
         return sum(parts) / len(parts)
 
     best = max(configs, key=score) if configs else None
+    from app.evaluation.pipeline_eval import _git_sha, _hash_files
+    from app.rag.prompts import PROMPT_VERSION
+
     return {
+        "provenance": {
+            "git_commit": _git_sha(), "prompt_version": PROMPT_VERSION, "provider": llm.provider,
+            "chat_model": settings.gemini_chat_model, "utility_model": settings.gemini_utility_model,
+            "fallback_models": settings.gemini_fallback_models, "embedding_model": get_embedder().model_id,
+            "similarity_threshold": settings.similarity_threshold, "reranker": settings.reranker,
+            "dataset_hash": _hash_files([dataset_path or DATA_DIR / "dataset.json"]),
+            "corpus_hash": _hash_files(sorted(corpus_dir.iterdir())), "index": "isolated in-memory",
+        },
         "dataset_size": len(dataset),
         "provider": llm.provider,
         "embedding_model": get_embedder().model_id,

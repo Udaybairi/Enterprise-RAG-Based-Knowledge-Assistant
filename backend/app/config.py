@@ -126,7 +126,11 @@ class Settings(BaseSettings):
     retrieval_strategy: Literal["semantic", "hybrid", "mmr", "keyword"] = "hybrid"
     retrieval_top_k: int = 6
     retrieval_fetch_k: int = 24
-    similarity_threshold: float = 0.45
+    # Calibrated for gemini-embedding-001 @ 768 dims on the evaluation set (docs/EVALUATION.md): relevant
+    # evidence scored >= 0.581 cosine, irrelevant chunks had a median of 0.546. 0.58 kept the evidence
+    # for every answerable question while removing ~36% of retrieved chunks. Re-calibrate after
+    # changing the embedding model.
+    similarity_threshold: float = 0.58
     mmr_lambda: float = 0.6
     hybrid_alpha: float = 0.6  # weight of the vector ranking in fusion
     reranker: Literal["none", "lexical", "llm"] = "lexical"
@@ -134,6 +138,9 @@ class Settings(BaseSettings):
     # always: expand every question; adaptive: only when the first retrieval is weak (saves a model
     # call per question, which matters on free-tier quotas); off: never.
     query_expansion: Literal["always", "adaptive", "off"] = "adaptive"
+    # adaptive: expand when the best match's cosine is below similarity_threshold + this margin
+    # (0.63 with the defaults: ~9% of answerable evaluation questions, most unanswerable ones).
+    expansion_margin: float = 0.05
     enable_query_rewriting: bool = True
     max_context_tokens: int = 12000
 

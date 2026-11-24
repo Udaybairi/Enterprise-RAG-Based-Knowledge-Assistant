@@ -136,7 +136,7 @@ class RAGChain:
         if not chunks:
             return True
         best = max((c.vector_score or 0.0) for c in chunks)
-        return best < cfg.similarity_threshold + 0.1
+        return best < cfg.similarity_threshold + get_settings().expansion_margin
 
     def _provenance(self, cfg: RetrievalConfig, expansion: str, trace: list[dict]) -> dict[str, Any]:
         """Everything needed to reproduce or audit this answer."""

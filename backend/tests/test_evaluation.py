@@ -36,3 +36,23 @@ def test_evaluation_api(client, admin):
     assert run["status"] == "completed", run
     assert run["results"]["configs"][0]["metrics"]["recall"] is not None
     assert client.get("/api/evaluation/dataset", headers=admin[0]).json()
+
+
+def test_evaluation_runs_record_provenance(client, admin):
+    from app.rag.prompts import PROMPT_VERSION
+
+    res = run_evaluation(["structure"], ["hybrid"], top_k=3, evaluate_generation=False)
+    p = res["provenance"]
+    assert p["prompt_version"] == PROMPT_VERSION and p["provider"] == "fake"
+    assert len(p["dataset_hash"]) == 12 and len(p["corpus_hash"]) == 12 and p["git_commit"]
+
+
+def test_ndcg_and_stratified_order():
+    from app.evaluation.metrics import ndcg_at_k
+    from app.evaluation.pipeline_eval import stratified
+
+    assert ndcg_at_k([True, False, False], 1, 3) == 1.0
+    assert round(ndcg_at_k([False, True], 1, 2), 3) == 0.631
+    assert ndcg_at_k([False, False], 1, 2) == 0.0
+    data = [{"id": i, "category": c} for i, c in enumerate("aaabbc")]
+    assert [d["category"] for d in stratified(data)][:3] == ["a", "b", "c"]
