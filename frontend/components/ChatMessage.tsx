@@ -34,13 +34,14 @@ export function CitationCard({ c, onOpen, active }: { c: Citation; onOpen: (c: C
           </div>
           {c.section && <div className="mt-0.5 truncate text-[11px] text-slate-500">§ {c.section}</div>}
           <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-slate-600 dark:text-slate-400">“{c.snippet}”</p>
-          {c.score != null && (
-            <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-500">
-              <span>Relevance</span>
+          {c.vector_score != null && (
+            <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-500"
+              title="Cosine similarity between the question and this passage's embedding. It indicates closeness in meaning, not a calibrated probability that the passage is correct.">
+              <span>Similarity</span>
               <span className="h-1 w-16 overflow-hidden rounded bg-slate-200 dark:bg-slate-700">
-                <span className="block h-full bg-brand-500" style={{ width: `${Math.min(100, Math.max(5, c.score * 100))}%` }} />
+                <span className="block h-full bg-brand-500" style={{ width: `${Math.min(100, Math.max(5, c.vector_score * 100))}%` }} />
               </span>
-              <span className="tabular-nums">{c.score.toFixed(2)}</span>
+              <span className="tabular-nums">{c.vector_score.toFixed(2)}</span>
             </div>
           )}
         </div>

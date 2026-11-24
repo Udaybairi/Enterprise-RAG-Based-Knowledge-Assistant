@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { MessageSquarePlus, MessagesSquare, Send, SlidersHorizontal, Sparkles, Square, Trash2 } from "lucide-react";
+import { MessageSquarePlus, MessagesSquare, RotateCcw, Send, SlidersHorizontal, Sparkles, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { ChatMessageView } from "@/components/ChatMessage";
 import { DocumentViewer, type ViewerTarget } from "@/components/DocumentViewer";
@@ -236,6 +236,14 @@ export default function ChatPage() {
                   onRegenerate={!streaming && lastUser ? () => send(lastUser.content, true) : undefined}
                   onFeedback={m.role === "assistant" && !m.id.startsWith("tmp-") ? (r) => feedback(m, r) : undefined} />
               ))
+            )}
+            {!streaming && !loadingConv && messages.at(-1)?.role === "user" && (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200" role="status">
+                <span>This question has no answer yet. The previous response may have been interrupted.</span>
+                <button className="btn-secondary shrink-0 px-2.5 py-1.5 text-xs" onClick={() => send(messages.at(-1)!.content, true)}>
+                  <RotateCcw className="h-3.5 w-3.5" />Retry
+                </button>
+              </div>
             )}
             <div ref={bottomRef} />
           </div>

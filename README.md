@@ -76,6 +76,9 @@ https://enterprise-rag-api-pi.vercel.app (`/api/health`, `/api/docs`).
 **Deploying to Vercel?** Follow **[docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md)** (frontend + serverless backend
 + Neon Postgres with pgvector).
 
+An external engineering audit and the response to each finding (fixed, planned, or disputed) are in
+**[docs/AUDIT_RESPONSE.md](docs/AUDIT_RESPONSE.md)**.
+
 See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the architecture, component interactions, database
 schema and security model.
 
@@ -140,7 +143,8 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000 and register. **The first account becomes the administrator.** Upload documents on
+Open http://localhost:3000 and register. **In development the first account becomes the administrator**
+(in production it does not; see `python -m app.manage create-admin`). Upload documents on
 the *Documents* page, wait for the *Ready* status, then ask questions in *AI Assistant*.
 
 ## Docker (PostgreSQL + backend + frontend)
@@ -211,7 +215,7 @@ documents.
 | POST | `/api/search` | Retrieval only (no generation) |
 | GET | `/api/dashboard/stats`, `/api/audit-logs` | Dashboard metrics / audit log (admin) |
 | POST / GET | `/api/evaluation/run`, `/api/evaluation/runs[/{id}]`, `/api/evaluation/dataset` | Evaluation |
-| GET | `/api/health`, `/api/settings`; POST `/api/settings/check-models` | Health, effective config, model verification |
+| GET | `/api/health` (public status), `/api/health/details` (admin), `/api/settings`; POST `/api/settings/check-models` | Health, diagnostics, effective config, model verification |
 
 Streaming chat events: `meta` → `status`* → `token`* → `final` (answer, citations, grounded, latency, retrieval
 details) → `done`, or `error`.
@@ -250,10 +254,10 @@ cd backend && VERCEL=1 FILE_STORAGE=database TEST_VECTOR_STORE=pgvector TEST_DAT
 ```
 
 ```bash
-cd frontend && npm run lint && npm run build
+cd frontend && npm run lint && npm run typecheck && npm run build
 ```
 
-The 88 backend tests run offline with the deterministic provider. They cover:
+The 99 backend tests run offline with the deterministic provider. They cover:
 
 - loaders for every format, preprocessing, and all four chunkers
 - all vector stores (Chroma, FAISS, pgvector, in-memory), MMR/RRF and the rerankers

@@ -171,3 +171,10 @@ class PgVectorStore(VectorStore):
         with self.engine.begin() as conn:
             return int(conn.execute(text(f"SELECT count(*) FROM {self.table} WHERE namespace = :ns"),
                                     {"ns": namespace}).scalar() or 0)
+
+    def ids_for_document(self, namespace, document_id) -> set[str]:
+        self._ensure_schema()
+        with self.engine.begin() as conn:
+            rows = conn.execute(text(f"SELECT id FROM {self.table} WHERE namespace = :ns "
+                                     "AND metadata ->> 'document_id' = :d"), {"ns": namespace, "d": document_id})
+            return {r[0] for r in rows}

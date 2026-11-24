@@ -67,6 +67,18 @@ class _Stage:
         return False
 
 
+def _remove_stale_vectors(store, collection_id: str, document_id: str, keep: set[str]) -> None:
+    """Delete vectors of this document that have no committed chunk row (best effort)."""
+    try:
+        stale = list(store.ids_for_document(collection_id, document_id) - keep)
+        if stale:
+            store.delete(collection_id, stale)
+        with session_scope() as db:
+            DocumentRepository(db).add_log(document_id, "cleanup", f"Removed {len(stale)} stale vectors")
+    except Exception:  # noqa: BLE001
+        log.exception("Stale vector cleanup failed for %s; will be reconciled on next processing", document_id)
+
+
 def process_document(document_id: str, *, strategy: str | None = None, chunk_size: int | None = None,
                      chunk_overlap: int | None = None) -> None:
     with _active_lock:
@@ -99,6 +111,7 @@ def _process(document_id: str, strategy, chunk_size, chunk_overlap) -> None:
         old_ids = set(ChunkRepository(db).ids_for_document(document_id))
 
     new_ids: list[str] = []
+    committed = False
     try:
         with _Stage(document_id, "extract") as st, file_storage.materialize(document_id) as path:
             extracted = load_document(path, ext)
@@ -148,12 +161,13 @@ def _process(document_id: str, strategy, chunk_size, chunk_overlap) -> None:
             "filename": filename,
         } for c in chunks]
 
+        # Ordering guarantees the previous version stays fully searchable until the new one is
+        # committed: (1) only ADD vectors, (2) atomically replace chunk rows in SQL, (3) only then
+        # remove vectors that no longer have a chunk row. A failure before (2) rolls back to the
+        # old version; a failure in (3) leaves harmless orphans that are reconciled next time.
         with _Stage(document_id, "index") as st:
             store.upsert(collection_id, new_ids, vectors, metadatas)
-            stale = list(old_ids - set(new_ids))
-            if stale:
-                store.delete(collection_id, stale)
-            st.done(f"Indexed {len(new_ids)} vectors in {store.name}; removed {len(stale)} stale vectors")
+            st.done(f"Indexed {len(new_ids)} vectors in {store.name}")
 
         with session_scope() as db:
             ChunkRepository(db).delete_for_document(document_id)
@@ -182,15 +196,26 @@ def _process(document_id: str, strategy, chunk_size, chunk_overlap) -> None:
             total_ms = (time.perf_counter() - t_start) * 1000
             DocumentRepository(db).add_log(document_id, "complete", "Document ready for retrieval", "INFO",
                                            round(total_ms, 1))
+        committed = True
         keyword_index.invalidate(collection_id)
+        _remove_stale_vectors(store, collection_id, document_id, set(new_ids))
         log.info("Document %s processed: %d chunks in %.0f ms", document_id, len(chunks),
                  (time.perf_counter() - t_start) * 1000)
     except Exception as exc:  # noqa: BLE001
+        if committed:  # only post-commit bookkeeping failed; the document itself is consistent
+            log.exception("Post-commit step failed for %s", document_id)
+            return
         msg = exc.message if isinstance(exc, AppError) else f"{type(exc).__name__}: {exc}"
         log.exception("Processing failed for %s", document_id)
-        # roll back vectors written in this run that are not referenced by the DB
+        # Roll back to the previous version: remove only vectors this run added. Ids that already
+        # existed are content-addressed (same text), so the old chunk rows still match them.
         try:
-            orphan = [i for i in new_ids if i not in old_ids]
+            with session_scope() as db:
+                still_exists = db.get(Document, document_id) is not None
+            if not still_exists:  # deleted while processing: nothing of it may remain
+                orphan = list(store.ids_for_document(collection_id, document_id))
+            else:
+                orphan = [i for i in new_ids if i not in old_ids]
             if orphan:
                 store.delete(collection_id, orphan)
         except Exception:  # noqa: BLE001
@@ -198,7 +223,14 @@ def _process(document_id: str, strategy, chunk_size, chunk_overlap) -> None:
         with session_scope() as db:
             doc = db.get(Document, document_id)
             if doc is not None:
-                doc.status = DocumentStatus.failed.value
-                doc.error_message = msg[:2000]
                 DocumentRepository(db).add_log(document_id, "error", msg[:2000], "ERROR")
+                if old_ids and doc.processed_at is not None:
+                    # Re-processing failed, but the previous version (chunk rows + vectors) is intact:
+                    # keep serving it instead of taking the document offline.
+                    doc.status = DocumentStatus.completed.value
+                    doc.error_message = f"Re-processing failed; the previous version is still active. {msg}"[:2000]
+                    DocumentRepository(db).add_log(document_id, "rollback", "Previous version kept active", "WARNING")
+                else:
+                    doc.status = DocumentStatus.failed.value
+                    doc.error_message = msg[:2000]
         keyword_index.invalidate(collection_id)

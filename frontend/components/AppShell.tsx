@@ -45,12 +45,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  // The mobile menu remembers the path it was opened on, so navigating closes it automatically.
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const setOpen = (v: boolean) => setOpenOn(v ? pathname : null);
 
   useEffect(() => {
     if (!loading && !user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
   }, [loading, user, router, pathname]);
-  useEffect(() => setOpen(false), [pathname]);
 
   if (loading || !user) {
     return (

@@ -33,14 +33,15 @@ export default function EvaluationPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   const running = runs.data?.some((r) => r.status === "running");
+  const reloadRuns = runs.reload;
   useEffect(() => {
     if (!running) return;
-    const t = setInterval(() => runs.reload(true), 3000);
+    const t = setInterval(() => reloadRuns(true), 3000);
     return () => clearInterval(t);
-  }, [running, runs.reload]);
+  }, [running, reloadRuns]);
 
   const run = runs.data?.find((r) => r.id === selectedId) ?? runs.data?.find((r) => r.status === "completed") ?? runs.data?.[0];
-  const configs: EvalConfigResult[] = run?.results?.configs ?? [];
+  const configs: EvalConfigResult[] = useMemo(() => run?.results?.configs ?? [], [run]);
   const label = (c: EvalConfigResult) => `${c.chunking} + ${c.retrieval}`;
 
   const radarData = useMemo(() => METRICS.filter((m) => configs.some((c) => c.metrics[m.key] != null)).map((m) => {

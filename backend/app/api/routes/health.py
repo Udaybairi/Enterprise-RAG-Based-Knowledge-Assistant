@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy import text
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_admin
 from app.config import get_settings
 from app.database.models import User
 from app.database.session import get_engine
@@ -12,9 +12,7 @@ from app.services.model_check import check_models, model_status
 router = APIRouter(prefix="/api", tags=["health"])
 
 
-@router.get("/health")
-def health():
-    settings = get_settings()
+def _dependency_checks() -> dict[str, str]:
     checks = {}
     try:
         with get_engine().connect() as conn:
@@ -25,20 +23,40 @@ def health():
     try:
         from app.vectorstore.factory import get_vector_store
 
-        get_vector_store()
+        get_vector_store().count("healthcheck")  # round-trip to the store, not just construction
         checks["vector_store"] = "ok"
     except Exception as exc:  # noqa: BLE001
         checks["vector_store"] = f"error: {type(exc).__name__}"
+    return checks
+
+
+@router.get("/health")
+def health(response: Response):
+    """Public readiness probe: status only, no configuration details. 503 when a dependency is down."""
+    ok = all(v == "ok" for v in _dependency_checks().values())
+    if not ok:
+        response.status_code = 503
+    return {"status": "ok" if ok else "degraded"}
+
+
+@router.get("/health/details")
+def health_details(_: User = Depends(require_admin)):
+    """Full diagnostics for administrators. A failed Gemini model check also marks the service degraded."""
+    settings = get_settings()
+    checks = _dependency_checks()
     models = model_status()
-    status = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+    models_ok = models.get("ok")  # None = not checked yet (e.g. serverless, before "Verify models")
+    status = "ok" if all(v == "ok" for v in checks.values()) and models_ok is not False else "degraded"
     return {
         "status": status,
         "version": "1.0.0",
         "environment": settings.environment,
         "llm_provider": settings.llm_provider,
         "vector_store": settings.vector_store,
+        "file_storage": settings.file_storage,
+        "serverless": settings.serverless,
         "checks": checks,
-        "models": {"ok": models.get("ok"), "message": models.get("message")},
+        "models": {"ok": models_ok, "checked": bool(models.get("checked")), "message": models.get("message")},
     }
 
 

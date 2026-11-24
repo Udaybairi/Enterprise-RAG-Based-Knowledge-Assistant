@@ -71,6 +71,16 @@ class User(Base):
         return self.role == Role.admin.value
 
 
+class AppFlag(Base):
+    """One-time system flags. The primary key makes claims atomic across concurrent requests
+    and instances (e.g. only one registration can ever claim the bootstrap-admin role)."""
+
+    __tablename__ = "app_flags"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
 class Collection(Base):
     __tablename__ = "collections"
     __table_args__ = (UniqueConstraint("owner_id", "name", name="uq_collection_owner_name"),)

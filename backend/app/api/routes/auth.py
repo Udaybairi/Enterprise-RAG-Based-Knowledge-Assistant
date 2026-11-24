@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import audit, get_current_user, require_admin
@@ -22,6 +23,7 @@ from app.schemas.auth import (
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+BOOTSTRAP_ADMIN_FLAG = "bootstrap_admin_claimed"
 users_router = APIRouter(prefix="/api/users", tags=["users"])
 
 
@@ -40,8 +42,16 @@ def register(body: RegisterRequest, request: Request, db: Session = Depends(get_
         raise HTTPException(status_code=403, detail="Self-registration is disabled")
     if repo.get_by_email(body.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists")
-    role = Role.admin.value if (first and settings.first_user_is_admin) else Role.user.value
-    user = repo.create(body.email, hash_password(body.password), body.full_name.strip(), role)
+    # Bootstrap admin only when explicitly allowed (never by default in production), and only once:
+    # the app_flags primary key makes the claim atomic even for simultaneous registrations.
+    role = Role.user.value
+    if first and settings.admin_on_first_registration and repo.claim_flag(BOOTSTRAP_ADMIN_FLAG):
+        role = Role.admin.value
+    try:
+        user = repo.create(body.email, hash_password(body.password), body.full_name.strip(), role)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="An account with this email already exists") from None
     CollectionRepository(db).get_or_create_default(user)
     audit(db, request, user, "user.register", "user", user.id, role=role)
     db.commit()

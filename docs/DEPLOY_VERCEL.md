@@ -57,7 +57,7 @@ Vercel deploys from Git. The repository is already on GitHub.
 | `MAX_UPLOAD_SIZE_MB` | `4` |
 | `CORS_ORIGINS` | the frontend URL, e.g. `https://rag-web.vercel.app` (fill in after step 3) |
 | `CORS_ORIGIN_REGEX` | optional, to also allow preview deployments: `^https://rag-web(-[a-z0-9-]+)?\.vercel\.app$` |
-| `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` | optional: creates the first admin. Otherwise the first account to register becomes admin, so register right after deploying. |
+| `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` | creates the first administrator. With `ENVIRONMENT=production` the first account to register is **not** made admin (a public site must not hand out admin to whoever signs up first). Alternatively run `python -m app.manage create-admin --email …` locally against the same `DATABASE_URL` (`vercel env pull`). |
 | `ALLOW_REGISTRATION` | `false` once your users exist, if you don't want open sign-up |
 
 The Gemini model variables (`GEMINI_CHAT_MODEL`, …) are optional; see `backend/.env.example`.
@@ -82,7 +82,7 @@ to new deployments.
 
 ### 5. Check it works
 
-1. Open the frontend and register. The first account becomes the administrator.
+1. Sign in as the administrator you provisioned in step 2 (or register and promote yourself with `python -m app.manage promote --email …`).
 2. Go to **Settings → AI models → Verify models**. Each configured Gemini model should show a green check.
    If one is missing, change its `GEMINI_*` variable on the backend and redeploy.
 3. Upload a small PDF on **Documents**. It should reach *Ready*. Then ask a question in **AI Assistant** and

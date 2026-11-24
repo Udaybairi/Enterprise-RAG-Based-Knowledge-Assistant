@@ -98,3 +98,7 @@ class ChromaVectorStore(VectorStore):
 
     def count(self, namespace) -> int:
         return self._col(namespace).count()
+
+    def ids_for_document(self, namespace, document_id) -> set[str]:
+        res = self._col(namespace).get(where={"document_id": document_id}, include=[])
+        return set(res["ids"])

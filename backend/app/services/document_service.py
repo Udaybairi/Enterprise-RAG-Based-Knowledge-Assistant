@@ -62,8 +62,9 @@ def reset_for_reprocess(db: Session, doc: Document) -> None:
 
 def delete_document(db: Session, doc: Document) -> None:
     """Delete vectors, chunks, the stored file and the DB row - consistently."""
-    ids = ChunkRepository(db).ids_for_document(doc.id)
     store = get_vector_store()
+    # union with what the store holds, so orphans from an interrupted run are removed too
+    ids = sorted(set(ChunkRepository(db).ids_for_document(doc.id)) | store.ids_for_document(doc.collection_id, doc.id))
     if ids:
         store.delete(doc.collection_id, ids)
     stored_path = doc.stored_path

@@ -50,8 +50,10 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "dev-only-insecure-secret-change-me-please-0123456789"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 8
-    # The first account that registers becomes an admin when this is true.
-    first_user_is_admin: bool = True
+    # Whether the first account to register becomes administrator. Unset = on in development/test,
+    # OFF in production: there, provision the first admin with BOOTSTRAP_ADMIN_* or
+    # `python -m app.manage create-admin`, never by "whoever registers first".
+    first_user_is_admin: bool | None = None
     allow_registration: bool = True
     # Optional bootstrap admin, created on startup if both are set.
     bootstrap_admin_email: str | None = None
@@ -64,6 +66,10 @@ class Settings(BaseSettings):
     rate_limit_upload: int = 30
     rate_limit_auth: int = 20
     rate_limit_window_seconds: int = 60
+    # Number of trusted reverse proxies in front of the API that append to X-Forwarded-For.
+    # 0 = ignore X-Forwarded-For entirely (it is client-controlled). Unset = 1 on Vercel (its edge
+    # overwrites the header with the real client IP), 0 elsewhere.
+    trusted_proxy_hops: int | None = None
 
     # ---- storage -----------------------------------------------------------
     # When unset, a SQLite file inside DATA_DIR is used (fine for development / single node).
@@ -138,6 +144,18 @@ class Settings(BaseSettings):
             # the deployment bundle is read-only on serverless platforms; only /tmp is writable
             self.data_dir = Path(tempfile.gettempdir()) / "rag-data"
         return self
+
+    @property
+    def admin_on_first_registration(self) -> bool:
+        if self.first_user_is_admin is not None:
+            return self.first_user_is_admin
+        return self.environment != "production"
+
+    @property
+    def effective_proxy_hops(self) -> int:
+        if self.trusted_proxy_hops is not None:
+            return max(0, self.trusted_proxy_hops)
+        return 1 if self.serverless else 0
 
     @property
     def effective_database_url(self) -> str:

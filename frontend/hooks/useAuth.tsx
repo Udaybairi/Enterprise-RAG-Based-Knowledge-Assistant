@@ -19,15 +19,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!tokenStore.get()) {
-      setLoading(false);
-      return;
-    }
-    api
-      .me()
-      .then(setUser)
-      .catch(() => tokenStore.clear())
-      .finally(() => setLoading(false));
+    const restore = tokenStore.get()
+      ? api.me().then(setUser).catch(() => tokenStore.clear())
+      : Promise.resolve();
+    restore.finally(() => setLoading(false));
     const onUnauthorized = () => setUser(null);
     window.addEventListener("rag:unauthorized", onUnauthorized);
     return () => window.removeEventListener("rag:unauthorized", onUnauthorized);

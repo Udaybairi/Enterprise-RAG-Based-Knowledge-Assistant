@@ -40,11 +40,12 @@ export default function DocumentsPage() {
   }, [search]);
 
   const inFlight = docs.data?.items.some((d) => d.status === "pending" || d.status === "processing");
+  const reloadDocs = docs.reload;
   useEffect(() => {
     if (!inFlight) return;
-    const t = setInterval(() => docs.reload(true), 2500);
+    const t = setInterval(() => reloadDocs(true), 2500);
     return () => clearInterval(t);
-  }, [inFlight, docs.reload]);
+  }, [inFlight, reloadDocs]);
 
   const colName = useCallback(
     (id: string) => collections.data?.find((c) => c.id === id)?.name ?? "—", [collections.data]);

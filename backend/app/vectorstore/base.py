@@ -66,3 +66,7 @@ class VectorStore(ABC):
 
     @abstractmethod
     def count(self, namespace: str) -> int: ...
+
+    @abstractmethod
+    def ids_for_document(self, namespace: str, document_id: str) -> set[str]:
+        """All vector ids stored for a document (used to reconcile with the relational DB)."""

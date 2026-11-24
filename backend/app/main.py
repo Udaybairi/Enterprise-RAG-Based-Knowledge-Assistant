@@ -40,6 +40,7 @@ def _bootstrap_admin() -> None:
             return
         user = repo.create(s.bootstrap_admin_email, hash_password(s.bootstrap_admin_password), "Administrator",
                            Role.admin.value)
+        repo.claim_flag("bootstrap_admin_claimed")
         CollectionRepository(db).get_or_create_default(user)
         log.info("Bootstrap admin %s created", s.bootstrap_admin_email)
 

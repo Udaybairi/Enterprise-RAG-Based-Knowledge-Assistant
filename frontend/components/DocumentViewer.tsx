@@ -39,33 +39,56 @@ function Highlighted({ text, snippet }: { text: string; snippet?: string }) {
   );
 }
 
+const NO_CHUNKS: ChunkPreview[] = [];
+
 export function DocumentViewer({ target, onClose }: { target: ViewerTarget | null; onClose: () => void }) {
-  const [page, setPage] = useState<number | null>(null);
-  const [chunks, setChunks] = useState<ChunkPreview[]>([]);
-  const [pageCount, setPageCount] = useState(0);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // State is keyed by the target / page it belongs to, so switching citations never shows (or is
+  // overwritten by) data from the previously opened document or page.
+  const [pageSel, setPageSel] = useState<{ target: ViewerTarget | null; page: number | null } | null>(null);
+  const page = pageSel && pageSel.target === target ? pageSel.page : target?.page ?? null;
+  const setPage = (fn: (p: number | null) => number | null) => setPageSel({ target, page: fn(page) });
+
+  const [file, setFile] = useState<{ docId: string; url: string } | null>(null);
+  const fileUrl = file && file.docId === target?.documentId ? file.url : null;
+
+  const previewKey = target ? `${target.documentId}:${page ?? "all"}` : null;
+  const [preview, setPreview] = useState<{ key: string; docId: string; chunks: ChunkPreview[]; pageCount: number;
+    error: string | null } | null>(null);
+  const loading = !!previewKey && preview?.key !== previewKey;
+  const chunks = preview?.key === previewKey ? preview.chunks : NO_CHUNKS;
+  const pageCount = preview && preview.docId === target?.documentId ? preview.pageCount : 0;
+  const [actionError, setActionError] = useState<string | null>(null);
+  const error = (preview?.key === previewKey ? preview?.error : null) ?? actionError;
   const isPdf = target?.fileType === "pdf" || target?.documentName.toLowerCase().endsWith(".pdf");
 
   useEffect(() => {
-    setPage(target?.page ?? null);
-    setFileUrl(null);
     if (!target || !isPdf) return;
     let url: string | null = null;
-    api.fileUrl(target.documentId).then((r) => { url = r.url; setFileUrl(r.url); }).catch((e) => setError(e.message));
-    return () => { if (url) URL.revokeObjectURL(url); };
+    let cancelled = false;
+    api.fileUrl(target.documentId)
+      .then((r) => {
+        url = r.url;
+        if (!cancelled) setFile({ docId: target.documentId, url: r.url });
+      })
+      .catch((e) => !cancelled && setActionError(e.message));
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
   }, [target, isPdf]);
 
   useEffect(() => {
-    if (!target) return;
-    setLoading(true);
-    setError(null);
+    if (!target || !previewKey) return;
+    let cancelled = false;
     api.preview(target.documentId, page)
-      .then((r) => { setChunks(r.chunks); setPageCount(r.page_count); })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [target, page]);
+      .then((r) => !cancelled && setPreview({ key: previewKey, docId: target.documentId, chunks: r.chunks,
+        pageCount: r.page_count, error: null }))
+      .catch((e) => !cancelled && setPreview({ key: previewKey, docId: target.documentId, chunks: [],
+        pageCount: 0, error: e.message }));
+    return () => {
+      cancelled = true;
+    };
+  }, [target, page, previewKey]);
 
   // Scroll the first highlighted passage into view
   useEffect(() => {
@@ -78,7 +101,7 @@ export function DocumentViewer({ target, onClose }: { target: ViewerTarget | nul
       const { url } = await api.fileUrl(target.documentId);
       window.open(isPdf && page ? `${url}#page=${page}` : url, "_blank", "noopener");
     } catch (e) {
-      setError((e as Error).message);
+      setActionError((e as Error).message);
     }
   };
 

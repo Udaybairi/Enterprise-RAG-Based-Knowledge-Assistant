@@ -9,17 +9,26 @@ import jwt
 
 from app.config import get_settings
 
-_BCRYPT_MAX_BYTES = 72
+# bcrypt only uses the first 72 bytes of its input. Longer passwords are rejected rather than
+# silently truncated (truncation would make two different long passwords interchangeable).
+BCRYPT_MAX_BYTES = 72
+
+
+def password_too_long(password: str) -> bool:
+    return len(password.encode("utf-8")) > BCRYPT_MAX_BYTES
 
 
 def hash_password(password: str) -> str:
-    pw = password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
-    return bcrypt.hashpw(pw, bcrypt.gensalt(rounds=12)).decode("utf-8")
+    if password_too_long(password):
+        raise ValueError(f"Password must be at most {BCRYPT_MAX_BYTES} bytes")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
 
 
 def verify_password(password: str, hashed: str) -> bool:
+    if password_too_long(password):
+        return False
     try:
-        return bcrypt.checkpw(password.encode("utf-8")[:_BCRYPT_MAX_BYTES], hashed.encode("utf-8"))
+        return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
     except ValueError:
         return False
 

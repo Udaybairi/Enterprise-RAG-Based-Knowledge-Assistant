@@ -1,8 +1,9 @@
 """In-process sliding-window rate limiter.
 
-Sufficient for a single API replica. For horizontally scaled deployments,
-swap :class:`SlidingWindowLimiter` for a Redis-backed implementation with the
-same interface.
+Limits are per process: adequate for a single API replica, weaker on serverless
+platforms (each function instance counts separately). For horizontally scaled
+deployments, swap :class:`SlidingWindowLimiter` for a Redis-backed
+implementation with the same interface, or add edge rate-limiting rules.
 """
 from __future__ import annotations
 
@@ -13,16 +14,31 @@ from collections import defaultdict, deque
 from fastapi import HTTPException, Request, status
 
 from app.config import get_settings
+from app.core.net import client_ip
 
 
 class SlidingWindowLimiter:
+    SWEEP_EVERY = 1000  # requests between sweeps of idle keys
+
     def __init__(self) -> None:
         self._hits: dict[str, deque[float]] = defaultdict(deque)
         self._lock = threading.Lock()
+        self._calls = 0
+        self._max_window = 0.0
+
+    def _sweep(self, now: float) -> None:
+        """Drop keys with no hits inside the largest window seen, so memory stays bounded."""
+        stale = [k for k, q in self._hits.items() if not q or q[-1] <= now - self._max_window]
+        for k in stale:
+            del self._hits[k]
 
     def hit(self, key: str, limit: int, window: float) -> tuple[bool, float]:
         now = time.monotonic()
         with self._lock:
+            self._max_window = max(self._max_window, window)
+            self._calls += 1
+            if self._calls % self.SWEEP_EVERY == 0:
+                self._sweep(now)
             q = self._hits[key]
             while q and q[0] <= now - window:
                 q.popleft()
@@ -43,9 +59,7 @@ def _client_key(request: Request) -> str:
     user = getattr(request.state, "user_id", None)
     if user:
         return f"user:{user}"
-    fwd = request.headers.get("x-forwarded-for")
-    ip = fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown")
-    return f"ip:{ip}"
+    return f"ip:{client_ip(request)}"
 
 
 def rate_limit(bucket: str):

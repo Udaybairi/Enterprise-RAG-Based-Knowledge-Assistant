@@ -4,17 +4,20 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.core.security import BCRYPT_MAX_BYTES, password_too_long
 from app.schemas.common import ORMModel
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=8, max_length=72)
     full_name: str = Field(default="", max_length=200)
 
     @field_validator("password")
     @classmethod
     def strong_password(cls, v: str) -> str:
+        if password_too_long(v):  # multi-byte characters can exceed bcrypt's limit within 72 chars
+            raise ValueError(f"Password must be at most {BCRYPT_MAX_BYTES} bytes")
         if not any(c.isdigit() for c in v) or not any(c.isalpha() for c in v):
             raise ValueError("Password must contain at least one letter and one digit")
         return v

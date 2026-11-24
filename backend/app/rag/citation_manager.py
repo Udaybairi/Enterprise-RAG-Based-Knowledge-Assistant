@@ -78,12 +78,13 @@ def process_citations(answer: str, sources: list[ContextSource]) -> CitationResu
     supported_sentences = 0
     total_sentences = 0
     for n in order:
-        c = by_id[n].chunk
+        src = by_id[n]
+        c = src.chunk
         ev = " ".join(evidence.get(n, []))
         for s in evidence.get(n, []):
             total_sentences += 1
             terms = content_terms(s)
-            if terms and len(terms & content_terms(c.text)) / len(terms) >= 0.3:
+            if terms and len(terms & content_terms(src.text)) / len(terms) >= 0.3:
                 supported_sentences += 1
         citations.append({
             "index": n,
@@ -95,7 +96,8 @@ def process_citations(answer: str, sources: list[ContextSource]) -> CitationResu
             "page_number": c.page_number,
             "page_end": c.page_end,
             "section": c.section,
-            "snippet": _best_snippet(c.text, ev),
+            "snippet": _best_snippet(src.text, ev),
+            "context_truncated": src.truncated,
             "score": round(float(c.score), 4) if c.score is not None else None,
             "vector_score": round(float(c.vector_score), 4) if c.vector_score is not None else None,
         })

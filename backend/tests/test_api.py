@@ -39,7 +39,7 @@ def alice_kb(client, alice, tmp_dir):
 
 def test_health(client):
     r = client.get("/api/health")
-    assert r.status_code == 200 and r.json()["checks"]["database"] == "ok"
+    assert r.status_code == 200 and r.json() == {"status": "ok"}  # public probe discloses nothing else
 
 
 def test_auth_flow(client, admin, alice):

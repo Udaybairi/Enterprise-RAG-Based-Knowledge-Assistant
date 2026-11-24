@@ -158,3 +158,8 @@ class FaissVectorStore(VectorStore):
 
     def count(self, namespace) -> int:
         return self._load(namespace).index.ntotal
+
+    def ids_for_document(self, namespace, document_id) -> set[str]:
+        ns = self._load(namespace)
+        with ns.lock:
+            return {i for i, m in ns.meta.items() if m.get("document_id") == document_id}

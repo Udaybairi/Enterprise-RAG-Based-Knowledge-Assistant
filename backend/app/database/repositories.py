@@ -11,9 +11,11 @@ from typing import Any
 
 import numpy as np
 from sqlalchemy import delete, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, contains_eager
 
 from app.database.models import (
+    AppFlag,
     AuditLog,
     Chunk,
     Collection,
@@ -46,6 +48,16 @@ class UserRepository:
 
     def list(self) -> Sequence[User]:
         return self.db.scalars(select(User).order_by(User.created_at)).all()
+
+    def claim_flag(self, key: str) -> bool:
+        """Atomically claim a one-time flag; False if another transaction already holds it."""
+        try:
+            with self.db.begin_nested():
+                self.db.add(AppFlag(key=key))
+                self.db.flush()
+            return True
+        except IntegrityError:
+            return False
 
     def create(self, email: str, hashed_password: str, full_name: str = "", role: str = Role.user.value) -> User:
         user = User(email=email.lower(), hashed_password=hashed_password, full_name=full_name, role=role)

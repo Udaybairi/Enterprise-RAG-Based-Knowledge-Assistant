@@ -54,3 +54,6 @@ class MemoryVectorStore(VectorStore):
 
     def count(self, namespace) -> int:
         return len(self._ns.get(namespace, {}))
+
+    def ids_for_document(self, namespace, document_id) -> set[str]:
+        return {i for i, (_, m) in self._ns.get(namespace, {}).items() if m.get("document_id") == document_id}

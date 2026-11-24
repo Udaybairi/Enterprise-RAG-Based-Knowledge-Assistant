@@ -6,19 +6,13 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.net import client_ip
 from app.core.security import decode_access_token
 from app.database.models import Collection, Document, User
 from app.database.repositories import AuditRepository, CollectionRepository
 from app.database.session import get_db
 
 bearer = HTTPBearer(auto_error=False)
-
-
-def client_ip(request: Request) -> str | None:
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    return request.client.host if request.client else None
 
 
 def get_current_user(
