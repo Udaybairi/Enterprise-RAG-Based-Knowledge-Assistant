@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye, FileText, Info, RefreshCw, Search, Trash2 } from "lucide-react";
+import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { DocumentViewer, type ViewerTarget } from "@/components/DocumentViewer";
 import { UploadDropzone } from "@/components/UploadDropzone";
@@ -75,7 +76,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-      <PageHeader title="Documents" description="Upload, inspect, re-process and remove documents in your knowledge base." />
+      <PageHeader eyebrow="Library" title="Documents" description="Upload, inspect, re-process and remove documents in your knowledge base." />
       {collections.data && (
         <UploadDropzone collections={collections.data} onUploaded={(msg, err) => {
           setToast({ msg, tone: err ? "error" : "success" });
@@ -83,7 +84,7 @@ export default function DocumentsPage() {
         }} />
       )}
 
-      <div className="card mt-6">
+      <div className="card mt-6 overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center dark:border-slate-800">
           <div className="relative flex-1">
             <Search className="absolute top-2.5 left-3 h-4 w-4 text-slate-400" />
@@ -118,7 +119,7 @@ export default function DocumentsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-slate-500 uppercase">
+              <thead className="border-b border-slate-200/70 bg-slate-50/60 text-left text-[11px] tracking-[0.08em] text-slate-500 uppercase dark:border-white/[0.06] dark:bg-white/[0.02]">
                 <tr>
                   <th className="px-4 py-3 font-medium">Document</th>
                   <th className="hidden px-4 py-3 font-medium md:table-cell">Collection</th>
@@ -129,8 +130,9 @@ export default function DocumentsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {docs.data?.items.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                {docs.data?.items.map((d, i) => (
+                  <motion.tr key={d.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]"
+                    initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i, 12) * 0.035 }}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <FileTypeIcon type={d.file_type} />
@@ -170,7 +172,7 @@ export default function DocumentsPage() {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>

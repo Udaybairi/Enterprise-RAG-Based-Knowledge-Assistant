@@ -7,14 +7,21 @@ Built with **FastAPI · LangChain · Google Gemini · ChromaDB / FAISS · Postgr
 
 ![Chat with citations (dark mode)](docs/screenshots/chat-dark.png)
 
-| Citation viewer (cited passage highlighted) | Dashboard |
+| Sign-in (animated product demo) | Dashboard (dark) |
 |---|---|
+| ![](docs/screenshots/sign-in.png) | ![](docs/screenshots/dashboard-dark.png) |
+| **Citation viewer (cited passage highlighted)** | **Dashboard** |
 | ![](docs/screenshots/citation-viewer.png) | ![](docs/screenshots/dashboard.png) |
 | **Strategy evaluation** | **Document management** |
 | ![](docs/screenshots/evaluation.png) | ![](docs/screenshots/documents.png) |
 
 > Screenshots were captured with the offline `fake` provider described below. The answers in them come from
 > its extractive test model, not from Gemini.
+
+The interface uses Geist type, glass surfaces and motion built with [Motion](https://motion.dev): page
+transitions, a sliding navigation indicator, count-up statistics, streamed answers with a caret, staggered
+citation cards and a looping retrieval demo on the sign-in screen. All of it follows the operating
+system's **reduced-motion** setting, and the end-to-end tests run in CI with and without it.
 
 ## Measured results
 

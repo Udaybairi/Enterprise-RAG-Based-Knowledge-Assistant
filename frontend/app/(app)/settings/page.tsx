@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, RefreshCw, Shield, XCircle } from "lucide-react";
+import { motion } from "motion/react";
 import { useState, type ReactNode } from "react";
 import { ErrorBanner, PageHeader, Spinner, Toast } from "@/components/ui";
 import { useAsync } from "@/hooks/useAsync";
@@ -10,11 +11,12 @@ import { api, formatDate } from "@/services/api";
 
 function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="card p-5">
+    <motion.section className="card p-6" initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }} transition={{ duration: 0.45 }}>
       <h2 className="text-sm font-semibold">{title}</h2>
       {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
       <div className="mt-4">{children}</div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -71,7 +73,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
-      <PageHeader title="Settings" description="Appearance, AI configuration and administration." />
+      <PageHeader eyebrow="Workspace" title="Settings" description="Appearance, AI configuration and administration." />
       {settings.error && <ErrorBanner message={settings.error} />}
 
       <Section title="Appearance">

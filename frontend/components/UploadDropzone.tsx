@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { UploadCloud } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { api } from "@/services/api";
 import type { Collection } from "@/types";
@@ -72,7 +73,7 @@ export function UploadDropzone({
   };
 
   return (
-    <div className="card p-4">
+    <div className="card p-5">
       <div className="mb-3 grid gap-3 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="up-col">Collection</label>
@@ -101,11 +102,18 @@ export function UploadDropzone({
         role="button"
         tabIndex={0}
         className={clsx(
-          "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition",
-          drag ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10" : "border-slate-300 hover:border-brand-400 dark:border-slate-700",
+          "relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-all duration-300",
+          drag ? "scale-[1.01] border-brand-500 bg-brand-50/80 shadow-glow dark:bg-brand-500/10"
+            : "border-slate-300/80 hover:border-brand-400 hover:bg-brand-50/30 dark:border-white/10 dark:hover:bg-brand-400/[0.04]",
         )}>
-        {busy ? <Spinner className="h-8 w-8 text-brand-600" /> : <UploadCloud className="h-8 w-8 text-brand-600" />}
-        <p className="mt-3 text-sm font-medium">{busy ? (progress ?? "Uploading…") : "Drop files here or click to browse"}</p>
+        <div aria-hidden className={clsx("pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgb(99_102_241/0.14),transparent_60%)] transition-opacity duration-500", drag ? "opacity-100" : "opacity-0")} />
+        <motion.div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-gradient text-white shadow-glow"
+          animate={drag ? { y: -6, scale: 1.08 } : busy ? { y: 0, scale: 1 } : { y: [0, -5, 0] }}
+          transition={drag || busy ? { type: "spring", stiffness: 400, damping: 20 } : { duration: 3, repeat: Infinity, ease: "easeInOut" }}>
+          {busy ? <Spinner className="h-6 w-6" /> : <UploadCloud className="h-6 w-6" />}
+        </motion.div>
+        <p className="relative mt-4 text-sm font-medium">{busy ? (progress ?? "Uploading…") : drag ? "Release to upload" : "Drop files here or click to browse"}</p>
+        {busy && <div className="relative mt-3 h-1 w-48 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10"><div className="skeleton h-full w-full bg-[linear-gradient(90deg,transparent,rgb(99_102_241),transparent)]" /></div>}
         <p className="mt-1 text-xs text-slate-500">PDF, DOCX, PPTX, XLSX, CSV, TXT, Markdown · up to {maxMb} MB each</p>
         <p className="mt-2 max-w-md text-[11px] text-slate-500">
           Extracted text is sent to Google Gemini to index and answer questions. Don&apos;t upload confidential or

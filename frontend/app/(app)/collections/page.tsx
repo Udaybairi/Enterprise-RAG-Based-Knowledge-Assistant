@@ -3,6 +3,7 @@
 import { FolderKanban, Globe, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { Stagger, StaggerItem } from "@/components/motion";
 import { ConfirmDialog, EmptyState, ErrorBanner, Modal, PageHeader, Spinner, Toast } from "@/components/ui";
 import { useAsync } from "@/hooks/useAsync";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +35,7 @@ export default function CollectionsPage() {
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-      <PageHeader title="Knowledge collections"
+      <PageHeader eyebrow="Organize" title="Knowledge collections"
         description="Group documents into collections. Each collection has its own isolated vector index."
         actions={<button className="btn-primary" onClick={() => setEditing("new")}><Plus className="h-4 w-4" />New collection</button>} />
       {error && <ErrorBanner message={error} onRetry={() => reload()} />}
@@ -43,12 +44,12 @@ export default function CollectionsPage() {
           <div className="card"><EmptyState icon={<FolderKanban className="h-5 w-5" />} title="No collections yet"
             action={<button className="btn-primary" onClick={() => setEditing("new")}>Create collection</button>} /></div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <Stagger className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {data?.map((c) => (
-              <div key={c.id} className="card flex flex-col p-5">
+              <StaggerItem key={c.id} className="card-interactive flex flex-col p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="rounded-lg bg-brand-50 p-2 text-brand-600 dark:bg-brand-500/10 dark:text-brand-400"><FolderKanban className="h-4 w-4" /></div>
+                    <div className="rounded-xl bg-brand-gradient p-2.5 text-white shadow-glow"><FolderKanban className="h-4 w-4" /></div>
                     <div>
                       <h3 className="font-semibold">{c.name}</h3>
                       <span className="inline-flex items-center gap-1 text-[11px] text-slate-500">
@@ -74,9 +75,9 @@ export default function CollectionsPage() {
                   <span>Created {formatDate(c.created_at)}</span>
                   <Link href="/chat" className="font-medium text-brand-600">Ask →</Link>
                 </div>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
         )}
       {editing && <CollectionForm initial={editing === "new" ? null : editing} isAdmin={user?.role === "admin"}
         onClose={() => setEditing(null)} onSaved={(msg) => { setEditing(null); setToast({ msg, tone: "success" }); void reload(true); }} />}

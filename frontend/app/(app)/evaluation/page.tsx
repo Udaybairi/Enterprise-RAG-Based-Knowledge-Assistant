@@ -1,6 +1,7 @@
 "use client";
 
 import { FlaskConical, Play, Trophy } from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EmptyState, ErrorBanner, PageHeader, Spinner, StatusBadge, Toast } from "@/components/ui";
@@ -69,7 +70,7 @@ export default function EvaluationPage() {
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-      <PageHeader title="RAG evaluation"
+      <PageHeader eyebrow="Quality" title="RAG evaluation"
         description="Compare chunking and retrieval strategies on a gold question → answer → source dataset." />
       {runs.error && <ErrorBanner message={runs.error} onRetry={() => runs.reload()} />}
 
@@ -118,11 +119,11 @@ export default function EvaluationPage() {
             {configs.length > 0 && (
               <>
                 {run.results.best && (
-                  <div className="card mb-6 flex items-center gap-3 border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+                  <motion.div initial={{ opacity: 0, y: 10, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} className="card mb-6 flex items-center gap-3 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-4 dark:border-emerald-500/20 dark:from-emerald-500/10 dark:to-teal-500/5">
                     <Trophy className="h-5 w-5 text-emerald-600" />
                     <div className="text-sm"><span className="font-semibold">Best configuration:</span> {run.results.best.chunking} chunking + {run.results.best.retrieval} retrieval
                       <span className="text-slate-500"> (composite score {run.results.best.score.toFixed(3)})</span></div>
-                  </div>
+                  </motion.div>
                 )}
                 <div className="grid gap-6 lg:grid-cols-2">
                   <div className="card p-5">
