@@ -6,6 +6,7 @@ from typing import Any
 
 from app.config import get_settings
 from app.core.logging import get_logger
+from app.llm.model_resolver import choose_model
 
 log = get_logger(__name__)
 _status: dict[str, Any] = {"checked": False}
@@ -39,14 +40,21 @@ def check_models(force: bool = False) -> dict[str, Any]:
             report = {}
             for role, (name, action) in wanted.items():
                 actions = models.get(name)
-                report[role] = {"model": name, "available": actions is not None,
-                                "supports": action in (actions or []) if actions is not None else False}
-            ok = all(r["available"] and r["supports"] for r in report.values())
+                entry = {"model": name, "available": actions is not None,
+                         "supports": action in (actions or []) if actions is not None else False}
+                if not (entry["available"] and entry["supports"]) and role != "embedding":
+                    # generation falls back automatically to the best available model for the role
+                    entry["will_use"] = choose_model(models, name, role)
+                report[role] = entry
+            ok = all((r["available"] and r["supports"]) or r.get("will_use") for r in report.values())
             suggestions = sorted(n for n, a in models.items() if "embedContent" in a)[:10]
             result = {"checked": True, "provider": "gemini", "ok": ok, "models": report,
                       "available_embedding_models": suggestions,
-                      "message": "All configured Gemini models are available" if ok else
-                      "Some configured Gemini models are unavailable - update GEMINI_* settings"}
+                      "message": ("All configured Gemini models are available" if all(
+                          r["available"] and r["supports"] for r in report.values()) else
+                          "Some configured models are unavailable; substitutes are used automatically "
+                          "(see will_use). Set GEMINI_* to make them explicit.") if ok else
+                      "No usable Gemini model for at least one role - update GEMINI_* settings"}
         except Exception as exc:  # noqa: BLE001
             result = {"checked": True, "provider": "gemini", "ok": False, "message": f"Model check failed: {exc}"}
     (log.info if result.get("ok") else log.warning)("Model check: %s", result.get("message"))

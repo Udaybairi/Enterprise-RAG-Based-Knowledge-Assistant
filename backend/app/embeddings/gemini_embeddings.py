@@ -12,6 +12,7 @@ from langchain_core.embeddings import Embeddings
 from app.config import Settings
 from app.core.exceptions import ProviderError
 from app.core.logging import get_logger
+from app.llm.model_resolver import friendly_error
 from app.llm.retry import RequestRateLimiter, with_retries
 
 log = get_logger(__name__)
@@ -62,6 +63,8 @@ class GeminiEmbeddings(Embeddings):
     def _embed_batch(self, texts: list[str], task_type: str) -> np.ndarray:
         def call():
             self._limiter.acquire()
+            # No automatic model substitution here: vectors from different embedding models are not
+            # comparable, so switching silently would corrupt retrieval. Fail clearly instead.
             return self.client.models.embed_content(model=self.model, contents=texts, config=self._config(task_type))
 
         try:
@@ -78,7 +81,8 @@ class GeminiEmbeddings(Embeddings):
                 log.warning("Embedding model rejected output_dimensionality; retrying without it")
                 self._supports_dimensionality = False
                 return self._embed_batch(texts, task_type)
-            raise ProviderError(f"Gemini embedding failed: {exc}") from exc
+            log.exception("Gemini embedding failed")
+            raise ProviderError(friendly_error(exc, "The embedding model")) from exc
         vectors = np.array([e.values for e in resp.embeddings], dtype=np.float32)
         if vectors.shape[0] != len(texts):
             raise ProviderError("Gemini returned an unexpected number of embeddings")

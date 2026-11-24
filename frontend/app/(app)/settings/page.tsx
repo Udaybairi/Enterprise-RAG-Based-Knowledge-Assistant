@@ -36,7 +36,7 @@ export default function SettingsPage() {
   const [checking, setChecking] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const s = settings.data;
-  const ms = s?.model_status as { ok?: boolean; message?: string; models?: Record<string, { model: string; available: boolean; supports: boolean }> } | undefined;
+  const ms = s?.model_status as { ok?: boolean; message?: string; models?: Record<string, { model: string; available: boolean; supports: boolean; will_use?: string | null }> } | undefined;
 
   const recheck = async () => {
     setChecking(true);
@@ -91,8 +91,12 @@ export default function SettingsPage() {
               <ul className="mt-3 space-y-1 text-xs">
                 {Object.entries(ms.models).map(([role, m]) => (
                   <li key={role} className="flex items-center gap-2">
-                    {m.available && m.supports ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <XCircle className="h-3.5 w-3.5 text-red-600" />}
+                    {m.available && m.supports ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      : m.will_use ? <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" /> : <XCircle className="h-3.5 w-3.5 text-red-600" />}
                     <span className="w-20 text-slate-500">{role}</span><code>{m.model}</code>
+                    {!(m.available && m.supports) && m.will_use && (
+                      <span className="text-amber-600 dark:text-amber-400">not available → using <code>{m.will_use}</code></span>
+                    )}
                   </li>
                 ))}
               </ul>

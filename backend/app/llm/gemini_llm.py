@@ -7,6 +7,7 @@ from app.config import Settings
 from app.core.exceptions import ProviderError
 from app.core.logging import get_logger
 from app.llm.base import LLMClient
+from app.llm.model_resolver import friendly_error, is_model_not_found, resolver
 from app.llm.retry import with_retries
 
 log = get_logger(__name__)
@@ -40,30 +41,55 @@ class GeminiLLM(LLMClient):
             kwargs["response_mime_type"] = "application/json"
         return self._types.GenerateContentConfig(**kwargs)
 
+    def _call(self, role: str, wanted: str, fn):
+        """Run ``fn(model)``; if the model is not available to this key, switch once to a suitable one."""
+        model = resolver.resolved(wanted, role)
+        try:
+            return fn(model)
+        except Exception as exc:  # noqa: BLE001
+            if not is_model_not_found(exc):
+                raise
+            substitute = resolver.substitute(self.client, wanted, role)
+            if substitute is None:
+                raise
+            return fn(substitute)
+
     def generate(self, prompt, *, system=None, temperature=None, max_tokens=None, json_mode=False,
                  utility=False) -> str:
-        model = self.utility_model if utility else self.model
+        role, wanted = ("utility", self.utility_model) if utility else ("chat", self.model)
         cfg = self._config(system, temperature, max_tokens, json_mode)
+
+        def call(model):
+            return with_retries(lambda: self.client.models.generate_content(model=model, contents=prompt, config=cfg),
+                                max_retries=4, what=f"gemini generate ({model})")
+
         try:
-            resp = with_retries(
-                lambda: self.client.models.generate_content(model=model, contents=prompt, config=cfg),
-                max_retries=4, what=f"gemini generate ({model})",
-            )
+            resp = self._call(role, wanted, call)
         except Exception as exc:  # noqa: BLE001
             log.exception("Gemini generation failed")
-            raise ProviderError(f"Gemini generation failed: {exc}") from exc
+            raise ProviderError(friendly_error(exc, "The AI model")) from exc
         return resp.text or ""
 
     def stream(self, prompt, *, system=None, temperature=None, max_tokens=None) -> Iterator[str]:
         cfg = self._config(system, temperature, max_tokens)
+
+        def open_stream(model):
+            # Errors such as "model not found" surface on the first chunk, so read it here
+            # (inside the fallback) before handing the stream to the caller.
+            it = with_retries(lambda: self.client.models.generate_content_stream(model=model, contents=prompt,
+                                                                                 config=cfg),
+                              max_retries=3, what="gemini stream")
+            it = iter(it)
+            first = next(it, None)
+            return first, it
+
         try:
-            it = with_retries(
-                lambda: self.client.models.generate_content_stream(model=self.model, contents=prompt, config=cfg),
-                max_retries=3, what="gemini stream",
-            )
+            first, it = self._call("chat", self.model, open_stream)
+            if first is not None and first.text:
+                yield first.text
             for chunk in it:
                 if chunk.text:
                     yield chunk.text
         except Exception as exc:  # noqa: BLE001
             log.exception("Gemini streaming failed")
-            raise ProviderError(f"Gemini streaming failed: {exc}") from exc
+            raise ProviderError(friendly_error(exc, "The AI model")) from exc
